@@ -1,0 +1,299 @@
+/* Pane companion animations.
+ * Ported verbatim from PaneStreet/src/css/main.css (lines ~1473-2346).
+ * All selectors key off #footer-mascot — that ID is preserved in index.html
+ * so the animation library lifts over with zero rewrites. */
+
+/* --- Always-on ambient (very subtle, slow) --- */
+.robot-antenna { animation: robot-antenna 4s ease-in-out infinite; transform-origin: 18px 6.5px; }
+
+.robot-eye-l, .robot-eye-r {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.robot-eye-l { animation: robot-blink 6s ease-in-out infinite; }
+.robot-eye-r { animation: robot-blink 6s ease-in-out 0.06s infinite; }
+
+@keyframes robot-blink {
+  0%, 44%, 50%, 100% { transform: scaleY(1); }
+  47%               { transform: scaleY(0); }
+}
+
+.robot-mouth-grin, .robot-mouth-flat, .robot-mouth-open { opacity: 0; }
+@keyframes robot-antenna {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(2deg); }
+  70% { transform: rotate(-2deg); }
+}
+
+.robot-shadow {
+  opacity: 0.15;
+  transition: transform 0.3s ease;
+}
+
+/* --- Walking --- */
+#footer-mascot.walking .robot-body { animation: walk-bob 0.5s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.walking .robot-leg-left  { animation: walk-leg-l 0.5s ease-in-out infinite; }
+#footer-mascot.walking .robot-leg-right { animation: walk-leg-r 0.5s ease-in-out infinite; }
+#footer-mascot.walking .robot-arm-l { animation: walk-arm-l 0.5s ease-in-out infinite; }
+#footer-mascot.walking .robot-arm-r { animation: walk-arm-r 0.5s ease-in-out infinite; }
+#footer-mascot.walking .robot-shadow { animation: walk-shadow 0.5s ease-in-out infinite; }
+#footer-mascot.walking .robot-antenna {
+  animation: walk-antenna-bounce 0.25s ease-in-out infinite alternate;
+  transform-origin: 18px 6.5px;
+}
+@keyframes walk-antenna-bounce { 0% { transform: rotate(-6deg); } 100% { transform: rotate(6deg); } }
+@keyframes walk-bob   { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-1px); } 50% { transform: translateY(0); } 75% { transform: translateY(-1px); } }
+@keyframes walk-leg-l { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(1.5px); } 75% { transform: translateX(-1.5px); } }
+@keyframes walk-leg-r { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1.5px); } 75% { transform: translateX(1.5px); } }
+@keyframes walk-arm-l { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1px); } 75% { transform: translateX(1px); } }
+@keyframes walk-arm-r { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(1px); } 75% { transform: translateX(-1px); } }
+@keyframes walk-shadow { 0%, 50%, 100% { transform: scaleX(1); } 25%, 75% { transform: scaleX(0.95); } }
+
+#footer-mascot.walk-anticipate .robot-body { animation: walk-crouch 0.2s ease-out forwards; transform-origin: center bottom; }
+@keyframes walk-crouch { 0% { transform: scaleY(1) scaleX(1); } 100% { transform: scaleY(0.94) scaleX(1.04); } }
+#footer-mascot.walk-arrive .robot-body { animation: walk-settle 0.3s ease-out forwards; transform-origin: center bottom; }
+@keyframes walk-settle { 0% { transform: translateY(-2px); } 40% { transform: translateY(1px) scaleY(0.97); } 100% { transform: translateY(0) scaleY(1); } }
+
+#footer-mascot.face-left svg { transform: scaleX(-1); }
+
+/* --- Default idle hover --- */
+#footer-mascot .robot-body { animation: idle-hover 4s ease-in-out infinite; transform-origin: center bottom; }
+@keyframes idle-hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+
+/* --- Look around --- */
+#footer-mascot.act-look .robot-eyes { animation: look-around 3s ease-in-out infinite; }
+#footer-mascot.act-look .robot-head { animation: look-head 3s ease-in-out infinite; transform-origin: 18px 13.5px; }
+@keyframes look-around { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-1.5px); } 70% { transform: translateX(1.5px); } }
+@keyframes look-head   { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-1deg); } 70% { transform: rotate(1deg); } }
+#footer-mascot.act-look .robot-eye-l,
+#footer-mascot.act-look .robot-eye-r { animation: look-alert 3s ease-in-out infinite; }
+@keyframes look-alert { 0%, 100% { transform: scaleY(0.9); } 50% { transform: scaleY(1.05); } }
+
+/* --- Wave --- */
+#footer-mascot.act-wave .robot-arm-r { animation: wave-arm 0.7s ease-in-out 5; transform-origin: 21.5px 21px; }
+#footer-mascot.act-wave .robot-body  { animation: wave-body 0.7s ease-in-out 5; transform-origin: center bottom; }
+@keyframes wave-arm  { 0%, 100% { transform: rotate(-15deg); } 50% { transform: rotate(-50deg); } }
+@keyframes wave-body { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(2deg); } }
+#footer-mascot.act-wave .robot-eye-r { animation: do-wink 0.5s ease-in-out 1s forwards, robot-blink 6s 2s infinite; }
+@keyframes do-wink { 0%, 100% { transform: scaleY(1); } 20%, 75% { transform: scaleY(0); } }
+
+/* --- Sleep --- */
+#footer-mascot.act-sleep .robot-eye-l,
+#footer-mascot.act-sleep .robot-eye-r { animation: none; transform: scaleY(0.05); }
+#footer-mascot.act-sleep .robot-mouth-smile { opacity: 0; }
+#footer-mascot.act-sleep .robot-mouth-flat  { opacity: 1; }
+#footer-mascot.act-sleep .robot-body     { animation: sleep-lean 4s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-sleep .robot-antenna  { animation: sleep-antenna 4s ease-in-out infinite; transform-origin: 18px 6.5px; }
+#footer-mascot.act-sleep .robot-shadow   { animation: sleep-shadow 4s ease-in-out infinite; }
+@keyframes sleep-lean    { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(6deg) scaleY(0.98); } }
+@keyframes sleep-antenna { 0%, 100% { transform: rotate(5deg); } 50% { transform: rotate(8deg); } }
+@keyframes sleep-shadow  { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(1.1); } }
+
+/* --- Stretch --- */
+#footer-mascot.act-stretch .robot-arm-l { animation: stretch-l 2s ease-in-out 2; transform-origin: 6.5px 21px; }
+#footer-mascot.act-stretch .robot-arm-r { animation: stretch-r 2s ease-in-out 2; transform-origin: 21.5px 21px; }
+#footer-mascot.act-stretch .robot-body  { animation: stretch-body 2s ease-in-out 2; transform-origin: center bottom; }
+@keyframes stretch-l    { 0%, 100% { transform: rotate(0deg); } 40%, 60% { transform: rotate(35deg); } }
+@keyframes stretch-r    { 0%, 100% { transform: rotate(0deg); } 40%, 60% { transform: rotate(-35deg); } }
+@keyframes stretch-body { 0%, 100% { transform: scaleY(1) translateY(0); } 40%, 60% { transform: scaleY(1.02) translateY(-1px); } }
+
+/* --- Nod --- */
+#footer-mascot.act-nod .robot-body { animation: nod 1.2s ease-in-out 3; transform-origin: center 16px; }
+@keyframes nod { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(6deg); } 40% { transform: rotate(2deg); } 55% { transform: rotate(6deg); } 70% { transform: rotate(0deg); } }
+
+/* --- Think --- */
+#footer-mascot.act-think .robot-body    { animation: think-body 3s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-think .robot-arm-l   { transform: rotate(30deg) translateY(-2px); transform-origin: 6.5px 21px; }
+#footer-mascot.act-think .robot-antenna { animation: think-antenna 1.5s ease-in-out infinite; transform-origin: 18px 6.5px; }
+#footer-mascot.act-think .robot-antenna circle { animation: think-antenna-tip 1.5s ease-in-out infinite; }
+@keyframes think-body        { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(-5deg); } }
+@keyframes think-antenna     { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(-12deg); } }
+@keyframes think-antenna-tip { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+#footer-mascot.act-think .robot-eye-l,
+#footer-mascot.act-think .robot-eye-r { animation: think-squint 3s ease-in-out infinite; }
+@keyframes think-squint { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(0.38); } }
+
+/* --- Dance --- */
+#footer-mascot.act-dance .robot-body      { animation: dance-sway 0.8s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-dance .robot-arm-l     { animation: dance-arm-l 0.8s ease-in-out infinite; transform-origin: 6.5px 21px; }
+#footer-mascot.act-dance .robot-arm-r     { animation: dance-arm-r 0.8s ease-in-out infinite; transform-origin: 21.5px 21px; }
+#footer-mascot.act-dance .robot-leg-left  { animation: dance-leg-l 0.8s ease-in-out infinite; }
+#footer-mascot.act-dance .robot-leg-right { animation: dance-leg-r 0.8s ease-in-out infinite; }
+#footer-mascot.act-dance .robot-shadow    { animation: dance-shadow 0.4s ease-in-out infinite; }
+@keyframes dance-sway   { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-8deg) translateY(-2px); } 50% { transform: rotate(0deg) translateY(0); } 75% { transform: rotate(8deg) translateY(-2px); } }
+@keyframes dance-arm-l  { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(20deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-15deg); } }
+@keyframes dance-arm-r  { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-20deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(15deg); } }
+@keyframes dance-leg-l  { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(1px); } }
+@keyframes dance-leg-r  { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-1px); } }
+@keyframes dance-shadow { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.9); } }
+#footer-mascot.act-dance .robot-eye-l, #footer-mascot.act-dance .robot-eye-r,
+#footer-mascot.act-bounce .robot-eye-l, #footer-mascot.act-bounce .robot-eye-r {
+  animation: happy-squint 0.4s ease-in-out infinite alternate;
+}
+@keyframes happy-squint { 0% { transform: scaleY(0.22); } 100% { transform: scaleY(0.32); } }
+#footer-mascot.act-dance .robot-mouth-smile,
+#footer-mascot.act-bounce .robot-mouth-smile { opacity: 0; }
+#footer-mascot.act-dance .robot-mouth-grin,
+#footer-mascot.act-bounce .robot-mouth-grin  { opacity: 1; }
+
+/* --- Type --- */
+#footer-mascot.act-type .robot-arm-l { animation: type-l 0.35s ease-in-out infinite; transform-origin: 6.5px 17px; }
+#footer-mascot.act-type .robot-arm-r { animation: type-r 0.35s ease-in-out infinite; transform-origin: 21.5px 17px; }
+#footer-mascot.act-type .robot-body  { transform: rotate(2deg); transform-origin: center bottom; }
+#footer-mascot.act-type .robot-head  { transform: translateY(0.5px); }
+@keyframes type-l { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-2.5px) rotate(5deg); } }
+@keyframes type-r { 0%, 40% { transform: translateY(0) rotate(0deg); } 70% { transform: translateY(-2.5px) rotate(-5deg); } 100% { transform: translateY(0) rotate(0deg); } }
+
+/* --- Bounce --- */
+#footer-mascot.act-bounce .robot-body   { animation: happy-bounce 0.6s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-bounce .robot-shadow { animation: bounce-shadow 0.6s ease-in-out infinite; }
+@keyframes happy-bounce  { 0% { transform: scaleY(0.92) scaleX(1.08) translateY(0); } 15% { transform: scaleY(1.0) scaleX(1.0) translateY(-1px); } 45% { transform: scaleY(1.08) scaleX(0.94) translateY(-6px); } 75% { transform: scaleY(1.0) scaleX(1.0) translateY(-1px); } 100% { transform: scaleY(0.92) scaleX(1.08) translateY(0); } }
+@keyframes bounce-shadow { 0%, 100% { transform: scaleX(1.1); opacity: 0.15; } 45% { transform: scaleX(0.6); opacity: 0.08; } }
+
+/* --- Sweep --- */
+#footer-mascot.act-sweep .robot-body  { animation: sweep-body 1.2s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-sweep .robot-arm-l { animation: sweep-arm-l 1.2s ease-in-out infinite; transform-origin: 6.5px 21px; }
+#footer-mascot.act-sweep .robot-arm-r { animation: sweep-arm-r 1.2s ease-in-out infinite; transform-origin: 21.5px 21px; }
+@keyframes sweep-body  { 0%, 100% { transform: rotate(2deg) translateY(0); } 50% { transform: rotate(-2deg) translateY(-0.5px); } }
+@keyframes sweep-arm-l { 0%, 100% { transform: rotate(25deg) translateX(1px); } 50% { transform: rotate(-10deg) translateX(-1px); } }
+@keyframes sweep-arm-r { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+
+/* --- Phone --- */
+#footer-mascot.act-phone .robot-arm-r { transform: rotate(-50deg) translateY(-4px); transform-origin: 21.5px 21px; }
+#footer-mascot.act-phone .robot-body  { animation: phone-nod 1.8s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-phone .robot-head  { animation: phone-tilt 1.8s ease-in-out infinite; transform-origin: 18px 13.5px; }
+@keyframes phone-nod  { 0%, 100% { transform: rotate(2deg); } 30% { transform: rotate(3deg) translateY(0.5px); } 60% { transform: rotate(1deg); } }
+@keyframes phone-tilt { 0%, 100% { transform: rotate(4deg); } 50% { transform: rotate(2deg); } }
+
+/* --- Code --- */
+#footer-mascot.act-code .robot-body  { transform: rotate(4deg); transform-origin: center bottom; }
+#footer-mascot.act-code .robot-head  { transform: translateY(1px); }
+#footer-mascot.act-code .robot-arm-l { animation: code-tap-l 0.3s ease-in-out infinite; transform-origin: 6.5px 21px; }
+#footer-mascot.act-code .robot-arm-r { animation: code-tap-r 0.3s ease-in-out infinite; transform-origin: 21.5px 21px; }
+#footer-mascot.act-code .robot-eyes  { animation: code-focus 4s ease-in-out infinite; }
+@keyframes code-tap-l { 0%, 100% { transform: rotate(8deg) translateY(0); } 50% { transform: rotate(5deg) translateY(-2px); } }
+@keyframes code-tap-r { 0%, 40% { transform: rotate(-5deg) translateY(0); } 70% { transform: rotate(-8deg) translateY(-2px); } 100% { transform: rotate(-5deg) translateY(0); } }
+@keyframes code-focus { 0%, 90%, 100% { transform: translateY(0.5px); } 50% { transform: translateY(0); } }
+#footer-mascot.act-code .robot-eye-l, #footer-mascot.act-code .robot-eye-r,
+#footer-mascot.act-type .robot-eye-l, #footer-mascot.act-type .robot-eye-r {
+  animation: focus-squint 2s ease-in-out infinite;
+}
+@keyframes focus-squint { 0%, 100% { transform: scaleY(0.45); } 50% { transform: scaleY(0.32); } }
+
+/* --- Mop --- */
+#footer-mascot.act-mop .robot-body      { animation: mop-sway 1.6s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-mop .robot-arm-l     { animation: mop-arm 1.6s ease-in-out infinite; transform-origin: 6.5px 21px; }
+#footer-mascot.act-mop .robot-leg-left  { animation: mop-leg-l 1.6s ease-in-out infinite; }
+#footer-mascot.act-mop .robot-leg-right { animation: mop-leg-r 1.6s ease-in-out infinite; }
+@keyframes mop-sway  { 0%, 100% { transform: rotate(-3deg) translateX(-1px); } 50% { transform: rotate(3deg) translateX(1px); } }
+@keyframes mop-arm   { 0%, 100% { transform: rotate(20deg) translateY(-1px); } 50% { transform: rotate(10deg) translateY(0); } }
+@keyframes mop-leg-l { 0%, 100% { transform: translateX(-0.5px); } 50% { transform: translateX(0.5px); } }
+@keyframes mop-leg-r { 0%, 100% { transform: translateX(0.5px); } 50% { transform: translateX(-0.5px); } }
+
+/* --- Shimmy --- */
+#footer-mascot.act-shimmy .robot-body  { animation: shimmy-body 0.5s ease-in-out infinite; transform-origin: center bottom; }
+#footer-mascot.act-shimmy .robot-arm-l { animation: shimmy-arm-l 0.5s ease-in-out infinite; transform-origin: 6.5px 21px; }
+#footer-mascot.act-shimmy .robot-arm-r { animation: shimmy-arm-r 0.5s ease-in-out infinite; transform-origin: 21.5px 21px; }
+#footer-mascot.act-shimmy .robot-eye-l,
+#footer-mascot.act-shimmy .robot-eye-r { animation: happy-squint 0.5s ease-in-out infinite alternate; }
+@keyframes shimmy-body  { 0%, 100% { transform: translateX(-1.5px) rotate(-1.5deg); } 50% { transform: translateX(1.5px) rotate(1.5deg); } }
+@keyframes shimmy-arm-l { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes shimmy-arm-r { 0%, 100% { transform: rotate(8deg); } 50% { transform: rotate(-8deg); } }
+
+/* --- Antenna fix --- */
+#footer-mascot.act-antenna-fix .robot-arm-r   { animation: antenna-fix-arm 0.6s ease-in-out; transform-origin: 21.5px 21px; }
+#footer-mascot.act-antenna-fix .robot-antenna { animation: antenna-fix-spring 0.6s ease-in-out; transform-origin: 18px 6.5px; }
+@keyframes antenna-fix-arm    { 0% { transform: rotate(0deg); } 30% { transform: rotate(-30deg) translateY(-3px); } 70% { transform: rotate(-25deg) translateY(-3px); } 100% { transform: rotate(0deg); } }
+@keyframes antenna-fix-spring { 0% { transform: rotate(0deg); } 30% { transform: rotate(-12deg); } 60% { transform: rotate(8deg); } 100% { transform: rotate(0deg); } }
+
+/* --- Yawn --- */
+#footer-mascot.act-yawn .robot-eye-l,
+#footer-mascot.act-yawn .robot-eye-r       { animation: yawn-eyes 2s ease-in-out forwards; }
+#footer-mascot.act-yawn .robot-mouth-smile { animation: yawn-mouth-fade 2s ease-in-out forwards; }
+#footer-mascot.act-yawn .robot-mouth-open  { animation: yawn-mouth-open 2s ease-in-out forwards; }
+#footer-mascot.act-yawn .robot-body        { animation: yawn-body 2s ease-in-out forwards; transform-origin: center bottom; }
+@keyframes yawn-eyes       { 0% { transform: scaleY(1); } 30%, 70% { transform: scaleY(0.05); } 100% { transform: scaleY(0.05); } }
+@keyframes yawn-mouth-fade { 0%, 20% { opacity: 1; } 30%, 80% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes yawn-mouth-open { 0%, 20% { opacity: 0; transform: scaleY(0.3); } 35%, 70% { opacity: 1; transform: scaleY(1); } 85% { opacity: 0; transform: scaleY(0.3); } 100% { opacity: 0; } }
+@keyframes yawn-body       { 0% { transform: rotate(0deg); } 30%, 70% { transform: rotate(-2deg) translateY(1px); } 100% { transform: rotate(0deg); } }
+
+/* --- Hiccup --- */
+#footer-mascot.act-hiccup .robot-body    { animation: hiccup-body 0.35s ease-out; transform-origin: center bottom; }
+#footer-mascot.act-hiccup .robot-antenna { animation: hiccup-antenna 0.35s ease-out; transform-origin: 18px 6.5px; }
+@keyframes hiccup-body    { 0% { transform: translateY(0); } 20% { transform: translateY(-4px) rotate(1.5deg); } 50% { transform: translateY(-2px) rotate(-1deg); } 100% { transform: translateY(0) rotate(0); } }
+@keyframes hiccup-antenna { 0% { transform: rotate(0deg); } 20% { transform: rotate(-15deg); } 60% { transform: rotate(10deg); } 100% { transform: rotate(0deg); } }
+
+/* --- Stumble --- */
+#footer-mascot.act-stumble .robot-body      { animation: stumble-body 0.5s ease-in-out; transform-origin: center bottom; }
+#footer-mascot.act-stumble .robot-leg-left  { animation: stumble-leg-l 0.5s ease-in-out; }
+#footer-mascot.act-stumble .robot-leg-right { animation: stumble-leg-r 0.5s ease-in-out; }
+@keyframes stumble-body  { 0% { transform: rotate(0deg) translateX(0); } 25% { transform: rotate(6deg) translateX(3px); } 60% { transform: rotate(-4deg) translateX(-2px); } 100% { transform: rotate(0deg) translateX(0); } }
+@keyframes stumble-leg-l { 0% { transform: translateX(0); } 30% { transform: translateX(3px) rotate(10deg); } 100% { transform: translateX(0) rotate(0); } }
+@keyframes stumble-leg-r { 0% { transform: translateX(0); } 30% { transform: translateX(-2px) rotate(-8deg); } 100% { transform: translateX(0) rotate(0); } }
+
+/* --- Startled --- */
+#footer-mascot.act-startled .robot-body    { animation: startled-body 0.6s ease-out; transform-origin: center bottom; }
+#footer-mascot.act-startled .robot-antenna { animation: startled-antenna 0.6s ease-out; transform-origin: 18px 6.5px; }
+#footer-mascot.act-startled .robot-eye-l,
+#footer-mascot.act-startled .robot-eye-r   { animation: panic-wide 0.15s ease-in-out infinite alternate; }
+@keyframes panic-wide       { 0% { transform: scaleY(1.1); } 100% { transform: scaleY(1.5); } }
+@keyframes startled-body    { 0% { transform: translateY(0) scale(1); } 15% { transform: translateY(-5px) scale(1.04); } 40% { transform: translateY(-2px) scale(1.01); } 100% { transform: translateY(0) scale(1); } }
+@keyframes startled-antenna { 0% { transform: rotate(0deg); } 15% { transform: rotate(-25deg); } 40% { transform: rotate(15deg); } 100% { transform: rotate(0deg); } }
+
+/* --- Double-take --- */
+#footer-mascot.act-double-take .robot-head { animation: double-take-head 0.45s ease-in-out; transform-origin: 18px 13px; }
+@keyframes double-take-head { 0% { transform: rotate(0deg); } 20% { transform: rotate(-5deg); } 45% { transform: rotate(5deg); } 70% { transform: rotate(-3deg); } 100% { transform: rotate(0deg); } }
+
+/* --- Idle breathing when standing still --- */
+@keyframes mascot-breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.015) translateY(-0.3px); } }
+#footer-mascot.act-stand .robot-body,
+#footer-mascot:not(.walking):not([class*="act-"]) .robot-body {
+  animation: mascot-breathe 4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+/* --- Broom prop --- */
+.robot-broom-prop { display: none; }
+#footer-mascot.act-special-broom .robot-broom-prop { display: block; }
+#footer-mascot.act-special-broom .robot-eye-l,
+#footer-mascot.act-special-broom .robot-eye-r { animation: focus-squint 1.2s ease-in-out infinite; }
+
+/* --- Cartwheel --- */
+@keyframes cartwheel-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+#footer-mascot.act-special-cartwheel .robot-body { animation: cartwheel-spin 0.45s linear infinite; transform-origin: 18px 19px; }
+
+/* --- Dragging --- */
+#footer-mascot.dragging { cursor: grabbing; transform: scale(1.08); transition: transform 0.15s ease !important; }
+
+/* --- Speech bubble --- */
+.mascot-speech {
+  position: absolute;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: var(--font-ui);
+  padding: 6px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  max-width: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 10;
+  border: 0.5px solid #444;
+}
+.mascot-speech.visible { opacity: 1; }
+.mascot-speech::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--bg-card);
+}

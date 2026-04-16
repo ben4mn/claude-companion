@@ -1,0 +1,27 @@
+{
+  "activity": {
+    "wave": ["Hey.", "Hi there.", "Hello."],
+    "sleep": ["Zzz...", "..."],
+    "sweep": ["Just a little maintenance.", "Tidying up."],
+    "phone": ["Mhm...", "Yeah...", "Uh huh."],
+    "code": ["Don't mind me.", "Just tinkering."]
+  },
+  "idle": {
+    "short": ["Still here.", "Waiting.", "Hm."],
+    "long":  ["Hello?", "Anyone there?", "I'll be over here."],
+    "sleepy": ["Getting sleepy.", "Long day..."]
+  },
+  "timeOfDay": {
+    "late":    ["It's late.", "Burning the midnight oil, I see."],
+    "morning": ["Morning.", "Fresh start."]
+  },
+  "pet": ["Oh! Hi.", "Hey there.", "That tickles."],
+  "secret": [
+    "You found me.",
+    "This is between us.",
+    "I wasn't expecting that.",
+    "Nobody's ever held on that long before.",
+    "Zzz...",
+    "Okay fine, you caught me."
+  ]
+}
