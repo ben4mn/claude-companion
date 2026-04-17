@@ -1,0 +1,20 @@
+<svg viewBox="0 0 36 38" width="68" height="72" fill="none" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <g class="sprite-body">
+    <!-- Body outline: 14x14 block with chunky outline -->
+    <rect x="10" y="9"  width="16" height="2" fill="var(--part-outline, #2a5c2a)"/>
+    <rect x="10" y="25" width="16" height="2" fill="var(--part-outline, #2a5c2a)"/>
+    <rect x="8"  y="11" width="2"  height="14" fill="var(--part-outline, #2a5c2a)"/>
+    <rect x="26" y="11" width="2"  height="14" fill="var(--part-outline, #2a5c2a)"/>
+    <!-- Body fill -->
+    <rect x="10" y="11" width="16" height="14" fill="var(--part-body, #6fd06b)"/>
+    <!-- Eye pixels -->
+    <rect class="sprite-eye-l" x="13" y="15" width="3" height="3" fill="var(--part-eyes, #1a1a1a)"/>
+    <rect class="sprite-eye-r" x="20" y="15" width="3" height="3" fill="var(--part-eyes, #1a1a1a)"/>
+    <!-- Mouth pixel -->
+    <rect x="15" y="21" width="6" height="2" fill="var(--part-outline, #2a5c2a)"/>
+    <!-- Little feet -->
+    <rect class="sprite-foot-l" x="11" y="27" width="4" height="3" fill="var(--part-outline, #2a5c2a)"/>
+    <rect class="sprite-foot-r" x="21" y="27" width="4" height="3" fill="var(--part-outline, #2a5c2a)"/>
+  </g>
+  <ellipse class="sprite-shadow" cx="18" cy="33" rx="8" ry="1" fill="rgba(0,0,0,0.2)"/>
+</svg>

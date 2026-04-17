@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Claude Companion — Animated companions for Claude Desktop</title>
+  <meta name="description" content="A small always-on-top overlay that brings animated companions to the Claude Desktop app on macOS. Drag them, watch them wander, pick your character." />
+  <link rel="canonical" href="https://ben4mn.github.io/claude-companion/" />
+
+  <!-- Open Graph (Discord, iMessage, Facebook, LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Claude Companion" />
+  <meta property="og:title" content="Claude Companion" />
+  <meta property="og:description" content="Animated companions for the Claude Desktop app on macOS. Drag them, watch them wander, pick your character." />
+  <meta property="og:url" content="https://ben4mn.github.io/claude-companion/" />
+  <meta property="og:image" content="https://ben4mn.github.io/claude-companion/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Pane and friends — five animated companions lined up on a dark stage." />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Claude Companion" />
+  <meta name="twitter:description" content="Animated companions for the Claude Desktop app on macOS." />
+  <meta name="twitter:image" content="https://ben4mn.github.io/claude-companion/og-image.png" />
+  <meta name="twitter:creator" content="@ben4mn" />
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="packs/pane/animations.css" />
+
+  <!-- Inline theme setter prevents a flash-of-wrong-theme on first paint -->
+  <script>
+    (function() {
+      try {
+        var p = new URLSearchParams(location.search).get('theme');
+        var t = p === 'warm' || p === 'dark' ? p : (localStorage.getItem('cc.theme') || 'dark');
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (_) {}
+    })();
+  </script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="#top" aria-label="Claude Companion">
+      <svg viewBox="0 0 36 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="6.5" y="5.5" width="23" height="16" rx="8" fill="currentColor"/>
+        <circle cx="14.5" cy="11" r="2" fill="var(--accent)"/>
+        <circle cx="21.5" cy="11" r="2" fill="var(--accent)"/>
+        <path d="M14 15.5 Q18 19 22 15.5" stroke="var(--accent)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <span>Claude Companion</span>
+    </a>
+    <nav class="site-nav">
+      <a href="#cast">Cast</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/ben4mn/claude-companion">GitHub</a>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch theme">☀︎ Warm mode</button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============================== HERO ============================== -->
+  <section class="hero" style="border-top: 0;">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <div class="hero-badges">
+          <img src="https://img.shields.io/badge/platform-macOS-1a1a1a?logo=apple&logoColor=white" alt="macOS" />
+          <img src="https://img.shields.io/badge/built_with-Tauri_2-24C8DB?logo=tauri&logoColor=white" alt="Tauri 2" />
+          <img src="https://img.shields.io/badge/license-MIT-2a6df0" alt="MIT" />
+          <img src="https://img.shields.io/github/stars/ben4mn/claude-companion?style=social" alt="GitHub stars" />
+        </div>
+        <h1>Meet your <span class="accent">Claude</span> Companion.</h1>
+        <p class="lede">
+          A tiny always-on-top overlay that brings animated companions to the Claude Desktop app.
+          They wander, they wave, they nap. Pick them up. Throw them around.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/ben4mn/claude-companion">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A12 12 0 0 0 .5 12.6c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.3-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.3 1-.3 2-.4 3-.4s2 .1 3 .4c2.3-1.6 3.3-1.3 3.3-1.3.7 1.6.3 2.8.1 3.1.8.9 1.2 2 1.2 3.3 0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A12 12 0 0 0 23.5 12.6 12 12 0 0 0 12 .5z"/></svg>
+            Get it on GitHub
+          </a>
+          <a class="btn" href="#features">How it works</a>
+        </div>
+      </div>
+
+      <div id="pane-stage" class="stage" aria-label="Interactive demo — drag Pane around the stage">
+        <span class="stage-hint">Try dragging Pane →</span>
+        <div id="footer-mascot" aria-label="Pane">
+          <svg viewBox="0 0 36 38" width="68" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g class="robot-body">
+              <g class="robot-antenna">
+                <path d="M18 6.5 Q18 3 17 1.5" stroke="var(--part-body, #b0b0b0)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+                <circle cx="17" cy="1.2" r="1.6" fill="var(--part-antenna-tip, #2a6df0)"/>
+              </g>
+              <g class="robot-head">
+                <rect x="6.5" y="5.5" width="23" height="16" rx="8" fill="var(--part-body, #b0b0b0)"/>
+                <path d="M14 6.5 Q18 5 22 6.5" stroke="#fff" stroke-width="0.6" opacity="0.3" fill="none" stroke-linecap="round"/>
+                <rect x="9.5" y="8.5" width="17" height="11" rx="5" fill="#111"/>
+                <ellipse cx="7" cy="13.5" rx="2.2" ry="2.5" fill="var(--part-body, #b0b0b0)"/>
+                <ellipse cx="7" cy="13.5" rx="1.2" ry="1.4" fill="#888" opacity="0.4"/>
+                <ellipse cx="29" cy="13.5" rx="2.2" ry="2.5" fill="var(--part-body, #b0b0b0)"/>
+                <ellipse cx="29" cy="13.5" rx="1.2" ry="1.4" fill="#888" opacity="0.4"/>
+                <g class="robot-eyes">
+                  <circle class="robot-eye-l" cx="14.5" cy="11" r="2" fill="var(--part-eyes, #2a6df0)"/>
+                  <circle class="robot-eye-r" cx="21.5" cy="11" r="2" fill="var(--part-eyes, #2a6df0)"/>
+                </g>
+                <g class="robot-mouth">
+                  <path class="robot-mouth-smile" d="M15.5 16 Q18 18 20.5 16" stroke="var(--part-mouth, #2a6df0)" stroke-width="1" fill="none" stroke-linecap="round"/>
+                  <path class="robot-mouth-grin"  d="M14 15.5 Q18 20 22 15.5" stroke="var(--part-mouth, #2a6df0)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                  <path class="robot-mouth-flat"  d="M16 17 Q18 17 20 17" stroke="var(--part-mouth, #2a6df0)" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+                  <ellipse class="robot-mouth-open" cx="18" cy="17.5" rx="2.4" ry="1.8" fill="none" stroke="var(--part-mouth, #2a6df0)" stroke-width="0.9"/>
+                </g>
+              </g>
+              <rect x="12" y="22" width="12" height="7" rx="3" fill="var(--part-body, #b0b0b0)"/>
+              <rect x="12.5" y="22.5" width="11" height="3" rx="2" fill="#fff" opacity="0.09"/>
+              <rect x="12" y="26" width="12" height="3" rx="1.5" fill="#000" opacity="0.1"/>
+              <rect class="robot-arm-l" x="6.5" y="22.5" width="4.5" height="5" rx="2.2" fill="var(--part-body, #b0b0b0)"/>
+              <rect class="robot-arm-r" x="25" y="22.5" width="4.5" height="5" rx="2.2" fill="var(--part-body, #b0b0b0)"/>
+              <g class="robot-broom-prop">
+                <line x1="28" y1="24" x2="34" y2="33" stroke="var(--part-body, #b0b0b0)" stroke-width="1.3" stroke-linecap="round" opacity="0.8"/>
+                <path d="M31 33 Q35 31 36.5 34 Q34 36.5 31 35 Z" fill="#888" opacity="0.55"/>
+              </g>
+              <g class="robot-leg-left">
+                <rect x="13.5" y="29" width="3.5" height="3.5" rx="1.2" fill="var(--part-body, #b0b0b0)"/>
+                <rect x="12.5" y="32" width="5.5" height="2" rx="1" fill="#888" opacity="0.5"/>
+              </g>
+              <g class="robot-leg-right">
+                <rect x="19" y="29" width="3.5" height="3.5" rx="1.2" fill="var(--part-body, #b0b0b0)"/>
+                <rect x="18" y="32" width="5.5" height="2" rx="1" fill="#888" opacity="0.5"/>
+              </g>
+            </g>
+            <ellipse class="robot-shadow" cx="18" cy="35" rx="9" ry="1.3" fill="rgba(0,0,0,0.1)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CAST ============================== -->
+  <section id="cast">
+    <div class="container">
+      <div class="section-head">
+        <h2>Meet the cast</h2>
+        <p>Five companions ship out of the box. Pick your vibe — switch any time.</p>
+      </div>
+
+      <div class="cast-grid">
+
+        <div class="cast-card" title="The SVG companion from PaneStreet.">
+          <div class="cast-art">
+            <svg viewBox="0 0 36 38" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6.5" y="5.5" width="23" height="16" rx="8" fill="#b0b0b0"/>
+              <rect x="9.5" y="8.5" width="17" height="11" rx="5" fill="#111"/>
+              <circle cx="14.5" cy="11" r="2" fill="#2a6df0"/>
+              <circle cx="21.5" cy="11" r="2" fill="#2a6df0"/>
+              <path d="M15.5 16 Q18 18 20.5 16" stroke="#2a6df0" stroke-width="1" fill="none" stroke-linecap="round"/>
+              <rect x="12" y="22" width="12" height="7" rx="3" fill="#b0b0b0"/>
+              <rect x="6.5" y="22.5" width="4.5" height="5" rx="2.2" fill="#b0b0b0"/>
+              <rect x="25" y="22.5" width="4.5" height="5" rx="2.2" fill="#b0b0b0"/>
+              <rect x="13.5" y="29" width="3.5" height="3.5" rx="1.2" fill="#b0b0b0"/>
+              <rect x="19" y="29" width="3.5" height="3.5" rx="1.2" fill="#b0b0b0"/>
+              <circle cx="17" cy="1.2" r="1.6" fill="#2a6df0"/>
+              <path d="M18 6.5 Q18 3 17 1.5" stroke="#b0b0b0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="cast-name">Pane</p>
+          <p class="cast-tag">SVG robot from PaneStreet</p>
+        </div>
+
+        <div class="cast-card" title="A gelatinous companion.">
+          <div class="cast-art">
+            <svg viewBox="0 0 36 38" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 7 Q26 9 28 18 Q29 27 22 30 Q18 31 14 30 Q7 27 8 18 Q10 9 18 7 Z" fill="#50c8e8"/>
+              <path d="M13 12 Q15 10 18 10 Q17 13 14 14 Z" fill="#a4e0ee" opacity="0.7"/>
+              <circle cx="15" cy="18" r="1.6" fill="#0a2e3a"/>
+              <circle cx="22" cy="18" r="1.6" fill="#0a2e3a"/>
+              <path d="M16.5 23 Q18.5 24.5 20.5 23" stroke="#0a2e3a" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="cast-name">Blob</p>
+          <p class="cast-tag">A gelatinous companion</p>
+        </div>
+
+        <div class="cast-card" title="A minimal line-art cat.">
+          <div class="cast-art">
+            <svg viewBox="0 0 36 38" xmlns="http://www.w3.org/2000/svg">
+              <path d="M28 26 Q32 22 31 18" stroke="#e8a44a" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <ellipse cx="18" cy="24" rx="10" ry="6" fill="#e8a44a"/>
+              <ellipse cx="18" cy="25.5" rx="5" ry="3" fill="#f4c988"/>
+              <circle cx="18" cy="15" r="6.5" fill="#e8a44a"/>
+              <path d="M13 11 L12 6 L16 9 Z" fill="#e8a44a"/>
+              <path d="M23 11 L24 6 L20 9 Z" fill="#e8a44a"/>
+              <path d="M14.5 14.5 Q15.5 15.5 16.5 14.5" stroke="#2a5028" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+              <path d="M19.5 14.5 Q20.5 15.5 21.5 14.5" stroke="#2a5028" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+              <circle cx="18" cy="16.8" r="0.5" fill="#2a5028"/>
+            </svg>
+          </div>
+          <p class="cast-name">Cat</p>
+          <p class="cast-tag">A minimal line-art cat</p>
+        </div>
+
+        <div class="cast-card" title="A friendly spectral drift.">
+          <div class="cast-art">
+            <svg viewBox="0 0 36 38" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 18 Q10 8 18 8 Q26 8 26 18 L26 28 Q24 30 22 28 Q20 30 18 28 Q16 30 14 28 Q12 30 10 28 Z" fill="#e8ebf5" opacity="0.95"/>
+              <path d="M10 18 Q10 8 18 8 Q26 8 26 18 L26 28 Q24 30 22 28 Q20 30 18 28 Q16 30 14 28 Q12 30 10 28 Z" stroke="#8c93ad" stroke-width="0.6" fill="none" opacity="0.45"/>
+              <ellipse cx="15" cy="16" rx="1.6" ry="2.2" fill="#1a1c2b"/>
+              <ellipse cx="21" cy="16" rx="1.6" ry="2.2" fill="#1a1c2b"/>
+              <ellipse cx="18" cy="21.5" rx="1.3" ry="1.6" fill="#1a1c2b"/>
+            </svg>
+          </div>
+          <p class="cast-name">Ghost</p>
+          <p class="cast-tag">A friendly spectral drift</p>
+        </div>
+
+        <div class="cast-card" title="A 16-bit pixel creature.">
+          <div class="cast-art">
+            <svg viewBox="0 0 36 38" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+              <rect x="10" y="9"  width="16" height="2" fill="#2a5c2a"/>
+              <rect x="10" y="25" width="16" height="2" fill="#2a5c2a"/>
+              <rect x="8"  y="11" width="2"  height="14" fill="#2a5c2a"/>
+              <rect x="26" y="11" width="2"  height="14" fill="#2a5c2a"/>
+              <rect x="10" y="11" width="16" height="14" fill="#6fd06b"/>
+              <rect x="13" y="15" width="3" height="3" fill="#1a1a1a"/>
+              <rect x="20" y="15" width="3" height="3" fill="#1a1a1a"/>
+              <rect x="15" y="21" width="6" height="2" fill="#2a5c2a"/>
+              <rect x="11" y="27" width="4" height="3" fill="#2a5c2a"/>
+              <rect x="21" y="27" width="4" height="3" fill="#2a5c2a"/>
+            </svg>
+          </div>
+          <p class="cast-name">Sprite</p>
+          <p class="cast-tag">A 16-bit pixel creature</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FEATURES ============================== -->
+  <section id="features">
+    <div class="container">
+      <div class="section-head">
+        <h2>Built to stay out of your way</h2>
+        <p>Claude Desktop is never touched. Companions watch the window and react.</p>
+      </div>
+
+      <div class="feature-grid">
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m3 3 18 18M12 4.5v15M4.5 12h15"/></svg></div>
+          <h3>Per-pixel click-through</h3>
+          <p>Clicks on empty space pass straight to Claude. Only the companion itself is interactive.</p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l5 3"/></svg></div>
+          <h3>Claude-aware</h3>
+          <p>Appears when Claude is frontmost. Hides when you switch to Chrome. Quits when Claude quits.</p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 10V7a5 5 0 0 1 10 0v3"/><rect x="4" y="10" width="16" height="11" rx="2"/></svg></div>
+          <h3>Drag, throw, watch it land</h3>
+          <p>Click and hold to pick a companion up. Let go and gravity pulls them back to Claude's bottom edge.</p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg></div>
+          <h3>Five packs shipped</h3>
+          <p>Pane, Blob, Cat, Ghost, Sprite. Each a self-contained folder: SVG + animations + speech.</p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.2 7.7l2.9-2.8"/></svg></div>
+          <h3>Personality presets</h3>
+          <p>Calm, Normal, Playful. Sliders for activity frequency, walk speed, chattiness, and quiet hours.</p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+          <h3>macOS native</h3>
+          <p>No Dock icon, no app switcher. Runs on Tauri with <code>NSWorkspace</code> and <code>CGWindow</code> — no accessibility permission required.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== INSTALL ============================== -->
+  <section id="install">
+    <div class="container">
+      <div class="section-head">
+        <h2>Install &amp; run</h2>
+        <p>Requires Rust + Node. macOS only for now.</p>
+      </div>
+      <div class="install">
+        <div class="code-block">
+          <button class="copy-btn" id="copy-btn" type="button" aria-label="Copy install commands">Copy</button>
+<pre id="install-code">git clone https://github.com/ben4mn/claude-companion.git
+cd claude-companion
+pnpm install
+pnpm tauri dev</pre>
+        </div>
+        <p class="install-note">First build compiles the Rust tree (~3–5 min). Pane will snap to the bottom-right of your Claude Desktop window.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>
+      MIT licensed · Built by <a href="https://github.com/ben4mn">@ben4mn</a> ·
+      Pane artwork from <a href="https://github.com/ben4mn/panestreet">PaneStreet</a>
+    </p>
+    <p style="margin-top: 0.35rem; font-size: 0.78rem;">
+      Unaffiliated with Anthropic PBC. "Claude" and "Claude Desktop" are trademarks of Anthropic PBC.
+    </p>
+  </div>
+</footer>
+
+<script type="module" src="theme.js"></script>
+<script type="module" src="app.js"></script>
+<script>
+  // Install-block copy button — inline because it's 10 lines and doesn't
+  // need its own file.
+  (function() {
+    var btn = document.getElementById('copy-btn');
+    var pre = document.getElementById('install-code');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', function() {
+      navigator.clipboard.writeText(pre.textContent).then(function() {
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1600);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
