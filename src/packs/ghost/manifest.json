@@ -1,0 +1,19 @@
+{
+  "id": "ghost",
+  "name": "Ghost",
+  "version": "0.1.0",
+  "tagline": "A friendly spectral drift.",
+  "author": "placeholder",
+  "viewBox": "0 0 36 38",
+  "renderSize": { "width": 68, "height": 72 },
+  "parts": [
+    { "key": "body",  "label": "Body",  "default": "#e8ebf5" },
+    { "key": "glow",  "label": "Glow",  "default": "#8c93ad" },
+    { "key": "eyes",  "label": "Eyes",  "default": "#1a1c2b" }
+  ],
+  "files": {
+    "body": "body.svg",
+    "animations": "animations.css",
+    "speech": "speech.json"
+  }
+}

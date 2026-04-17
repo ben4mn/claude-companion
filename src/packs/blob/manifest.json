@@ -1,0 +1,19 @@
+{
+  "id": "blob",
+  "name": "Blob",
+  "version": "0.1.0",
+  "tagline": "A gelatinous companion.",
+  "author": "placeholder",
+  "viewBox": "0 0 36 38",
+  "renderSize": { "width": 68, "height": 72 },
+  "parts": [
+    { "key": "body",      "label": "Body",      "default": "#50c8e8" },
+    { "key": "highlight", "label": "Highlight", "default": "#a4e0ee" },
+    { "key": "eyes",      "label": "Eyes",      "default": "#0a2e3a" }
+  ],
+  "files": {
+    "body": "body.svg",
+    "animations": "animations.css",
+    "speech": "speech.json"
+  }
+}

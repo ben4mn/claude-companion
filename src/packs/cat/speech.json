@@ -1,0 +1,14 @@
+{
+  "activity": {
+    "wave": ["Prrrr."],
+    "sleep": ["Mrow..."],
+    "code": ["*stares*"]
+  },
+  "idle": {},
+  "timeOfDay": {
+    "morning": ["Feed me.", "Mrow?"],
+    "late": ["Time to knock things off tables."]
+  },
+  "pet": ["Purrrrr.", "*blink*", "Mrow."],
+  "secret": []
+}

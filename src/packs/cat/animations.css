@@ -1,0 +1,49 @@
+/* Cat pack — minimal movement, feline composure. Tail sway is always on;
+   walking adds a subtle body bob. */
+
+#footer-mascot.face-left .cat-body { transform: scaleX(-1); transform-origin: 50% 100%; }
+
+/* Tail sway — always active. */
+@keyframes cat-tail-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-8deg); }
+}
+.cat-tail { transform-origin: 28px 26px; animation: cat-tail-sway 2.2s ease-in-out infinite; }
+
+/* Walking: gentle body bob + foot offset. */
+@keyframes cat-walk-body {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1px); }
+}
+#footer-mascot.walking .cat-body { animation: cat-walk-body 0.4s ease-in-out infinite; }
+
+/* Stretch: head tilts, body scales horizontally. */
+@keyframes cat-stretch {
+  0%, 100% { transform: scale(1, 1); }
+  50%      { transform: scale(1.15, 0.95) translateY(1px); }
+}
+#footer-mascot.act-stretch .cat-body { animation: cat-stretch 2s ease-in-out infinite; }
+
+/* Sleep: shrink and rest. */
+#footer-mascot.act-sleep .cat-body { transform: scale(1, 0.85) translateY(2px); }
+
+/* Wave: little head bob. */
+@keyframes cat-head-nod {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-0.8px); }
+}
+#footer-mascot.act-wave .cat-head,
+#footer-mascot.act-nod  .cat-head { animation: cat-head-nod 0.5s ease-in-out infinite; }
+
+/* Dragging / falling. */
+#footer-mascot.act-falling .cat-body {
+  transform: rotate(-10deg);
+  transform-origin: 50% 100%;
+}
+
+/* Eye blink (on the closed-eye arc — briefly becomes a flat line). */
+@keyframes cat-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97%           { transform: scaleY(0.2); }
+}
+.cat-eye-l, .cat-eye-r { transform-origin: 50% 50%; animation: cat-blink 5s infinite; }

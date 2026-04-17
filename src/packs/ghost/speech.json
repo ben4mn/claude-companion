@@ -1,0 +1,14 @@
+{
+  "activity": {
+    "wave": ["Ooooo."],
+    "sleep": ["Phaseshift."],
+    "code": ["Haunting..."]
+  },
+  "idle": {},
+  "timeOfDay": {
+    "morning": ["Still here."],
+    "late": ["The witching hour."]
+  },
+  "pet": ["...", "Cold.", "Boo."],
+  "secret": []
+}

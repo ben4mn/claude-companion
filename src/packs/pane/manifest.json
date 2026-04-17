@@ -1,21 +1,20 @@
 {
   "id": "pane",
   "name": "Pane",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tagline": "The SVG companion from PaneStreet.",
   "author": "ben4mn",
   "source": "https://github.com/ben4mn/panestreet",
   "viewBox": "0 0 36 38",
   "renderSize": { "width": 68, "height": 72 },
-  "theme": {
-    "--accent": "#2a6df0",
-    "--text-secondary": "#b0b0b0",
-    "--text-muted": "#888888",
-    "--bg-card": "#1b1b1f",
-    "--bg-pane": "#111111",
-    "--text-primary": "#e6e6e6"
-  },
+  "parts": [
+    { "key": "body",        "label": "Body",        "default": "#b0b0b0" },
+    { "key": "antennaTip",  "label": "Antenna tip", "default": "#2a6df0" },
+    { "key": "eyes",        "label": "Eyes",        "default": "#2a6df0" },
+    { "key": "mouth",       "label": "Mouth",       "default": "#2a6df0" }
+  ],
   "files": {
+    "body": "body.svg",
     "animations": "animations.css",
     "speech": "speech.json"
   }

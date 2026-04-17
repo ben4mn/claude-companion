@@ -1,0 +1,15 @@
+<svg viewBox="0 0 36 38" width="68" height="72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g class="blob-body">
+    <!-- Main blob shape — soft wobbly droplet -->
+    <path class="blob-shape" d="M18 7 Q26 9 28 18 Q29 27 22 30 Q18 31 14 30 Q7 27 8 18 Q10 9 18 7 Z"
+          fill="var(--part-body, #50c8e8)"/>
+    <!-- Highlight: top-left sheen -->
+    <path d="M13 12 Q15 10 18 10 Q17 13 14 14 Z" fill="var(--part-highlight, #a4e0ee)" opacity="0.7"/>
+    <!-- Eyes -->
+    <circle class="blob-eye-l" cx="15" cy="18" r="1.6" fill="var(--part-eyes, #0a2e3a)"/>
+    <circle class="blob-eye-r" cx="22" cy="18" r="1.6" fill="var(--part-eyes, #0a2e3a)"/>
+    <!-- Mouth (tiny) -->
+    <path d="M16.5 23 Q18.5 24.5 20.5 23" stroke="var(--part-eyes, #0a2e3a)" stroke-width="0.8" stroke-linecap="round" fill="none"/>
+  </g>
+  <ellipse class="blob-shadow" cx="18" cy="33" rx="9" ry="1.4" fill="rgba(0,0,0,0.15)"/>
+</svg>

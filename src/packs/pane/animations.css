@@ -265,35 +265,4 @@
 /* --- Dragging --- */
 #footer-mascot.dragging { cursor: grabbing; transform: scale(1.08); transition: transform 0.15s ease !important; }
 
-/* --- Speech bubble --- */
-.mascot-speech {
-  position: absolute;
-  bottom: 72px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 13px;
-  line-height: 1.4;
-  font-family: var(--font-ui);
-  padding: 6px 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  max-width: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-  z-index: 10;
-  border: 0.5px solid #444;
-}
-.mascot-speech.visible { opacity: 1; }
-.mascot-speech::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 50%;
-  margin-left: -4px;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 5px solid var(--bg-card);
-}
+/* Speech bubble styles moved to base.css so every pack gets them. */

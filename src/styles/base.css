@@ -41,8 +41,13 @@ html, body {
   pointer-events: auto;
   position: absolute;
   bottom: 0;
-  left: 50%;
-  margin-left: -34px; /* 68px companion, centered */
+  /* Right-anchored (not centered) so the window's extra width — added to
+     give the speech bubble room — extends LEFT of Pane, not both sides.
+     That way speech can be 240px wide without getting clipped by the
+     window edge, and Pane's visual position on screen stays in Claude's
+     bottom-right corner (since the margin-right vs the window right edge
+     is unchanged). */
+  right: 26px;
   width: 68px;
   height: 72px;
   cursor: grab;
@@ -54,3 +59,54 @@ html, body {
 }
 
 #footer-mascot svg { overflow: visible; }
+
+/* ---- Speech bubble — pack-agnostic. Lives in base so every companion
+   gets the same bubble UX without each pack shipping its own CSS. Packs
+   can still override in their animations.css if they want a themed look.
+
+   The bubble is right-anchored to Pane's right edge and grows LEFT +
+   UP. It wraps long text and scales vertically to fit. */
+.mascot-speech {
+  position: absolute;
+  bottom: 72px;                    /* just above Pane's head */
+  right: 0;                        /* anchor to Pane's right */
+  background: var(--bg-card, #1b1b1f);
+  color: var(--text-primary, #e6e6e6);
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: var(--font-ui);
+  padding: 8px 12px;
+  border-radius: 8px;
+  /* Critical: `width: max-content` tells the browser to size to the
+     natural text width first, THEN cap via max-width. Without this,
+     `position: absolute` defaults to shrink-to-fit relative to the
+     containing block (#footer-mascot at 68px wide) and collapses the
+     bubble to the parent's width — ignoring max-width entirely. */
+  width: max-content;
+  max-width: 300px;
+  min-width: 40px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* No hyphens — ugly mid-word breaks in short bubbles. */
+  hyphens: manual;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 10;
+  border: 0.5px solid #444;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+.mascot-speech.visible { opacity: 1; }
+.mascot-speech::after {
+  /* Tail points down at Pane's center. Pane is 68px wide anchored at
+     right: 26 of window; his center-x relative to bubble's right-anchor
+     is ~34px in from the bubble's right edge. */
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  right: 30px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--bg-card, #1b1b1f);
+}

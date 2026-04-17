@@ -1,0 +1,19 @@
+{
+  "id": "cat",
+  "name": "Cat",
+  "version": "0.1.0",
+  "tagline": "A minimal line-art cat.",
+  "author": "placeholder",
+  "viewBox": "0 0 36 38",
+  "renderSize": { "width": 68, "height": 72 },
+  "parts": [
+    { "key": "body",    "label": "Body",    "default": "#e8a44a" },
+    { "key": "belly",   "label": "Belly",   "default": "#f4c988" },
+    { "key": "eyes",    "label": "Eyes",    "default": "#2a5028" }
+  ],
+  "files": {
+    "body": "body.svg",
+    "animations": "animations.css",
+    "speech": "speech.json"
+  }
+}

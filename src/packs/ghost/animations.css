@@ -1,0 +1,40 @@
+/* Ghost pack — floats instead of walks. Continuous hover + soft drift;
+   "walking" is just a horizontal glide with no foot motion. */
+
+#footer-mascot.face-left .ghost-body { transform: scaleX(-1); transform-origin: 50% 50%; }
+
+/* Constant hover bob — ghosts never sit still. */
+@keyframes ghost-hover {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+.ghost-body { animation: ghost-hover 2.8s ease-in-out infinite; }
+
+/* Walking: wavier hover so the motion reads as purposeful drift. */
+@keyframes ghost-drift {
+  0%, 100% { transform: translateY(0); }
+  25%      { transform: translateY(-3px); }
+  75%      { transform: translateY(-1px); }
+}
+#footer-mascot.walking .ghost-body { animation: ghost-drift 0.6s ease-in-out infinite; }
+
+/* Wavy tail ripple */
+@keyframes ghost-ripple {
+  0%, 100% { d: path("M10 18 Q10 8 18 8 Q26 8 26 18 L26 28 Q24 30 22 28 Q20 30 18 28 Q16 30 14 28 Q12 30 10 28 Z"); }
+  50%      { d: path("M10 18 Q10 8 18 8 Q26 8 26 18 L26 28 Q24 29 22 30 Q20 29 18 30 Q16 29 14 30 Q12 29 10 28 Z"); }
+}
+/* Safari/WebKit supports `d` animation; Chromium slower — keeping simple */
+
+/* Spooky flicker for dragging */
+@keyframes ghost-flicker {
+  0%, 100% { opacity: 0.95; }
+  50%      { opacity: 0.55; }
+}
+#footer-mascot.act-falling .ghost-shape { animation: ghost-flicker 0.3s ease-in-out infinite; }
+
+/* Sleep: fade a bit */
+#footer-mascot.act-sleep .ghost-body { opacity: 0.6; }
+
+/* Blink */
+@keyframes ghost-blink { 0%, 95%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+.ghost-eye-l, .ghost-eye-r { transform-origin: 50% 50%; animation: ghost-blink 5.5s infinite; }

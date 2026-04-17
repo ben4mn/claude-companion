@@ -1,0 +1,19 @@
+{
+  "id": "sprite",
+  "name": "Sprite",
+  "version": "0.1.0",
+  "tagline": "A 16-bit pixel creature.",
+  "author": "placeholder",
+  "viewBox": "0 0 36 38",
+  "renderSize": { "width": 68, "height": 72 },
+  "parts": [
+    { "key": "body",    "label": "Body",    "default": "#6fd06b" },
+    { "key": "outline", "label": "Outline", "default": "#2a5c2a" },
+    { "key": "eyes",    "label": "Eyes",    "default": "#1a1a1a" }
+  ],
+  "files": {
+    "body": "body.svg",
+    "animations": "animations.css",
+    "speech": "speech.json"
+  }
+}

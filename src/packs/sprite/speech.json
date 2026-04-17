@@ -1,0 +1,14 @@
+{
+  "activity": {
+    "wave": ["Hi there."],
+    "sleep": ["Zzz."],
+    "code": ["Respawning."]
+  },
+  "idle": {},
+  "timeOfDay": {
+    "morning": ["Loading...", "Booted up."],
+    "late": ["Save state?"]
+  },
+  "pet": ["Beep.", "Boop."],
+  "secret": []
+}

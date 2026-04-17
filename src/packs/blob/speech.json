@@ -1,0 +1,14 @@
+{
+  "activity": {
+    "wave": ["...*wobble*"],
+    "sleep": ["Melting..."],
+    "code": ["Squish squish."]
+  },
+  "idle": {},
+  "timeOfDay": {
+    "morning": ["Gooood morning.", "Wobble wobble."],
+    "late": ["Soft o'clock."]
+  },
+  "pet": ["Squish.", "Jiggle.", "Soft."],
+  "secret": []
+}

@@ -1,0 +1,22 @@
+/* Sprite pack — 16-bit style animations. Sharp step-like motion over the
+   smooth interpolation most other packs use; keeps the pixel-art feel. */
+
+#footer-mascot.face-left .sprite-body { transform: scaleX(-1); transform-origin: 50% 50%; }
+
+/* Walk: alternating foot bob, 8 steps per cycle for that retro stomp. */
+@keyframes sprite-foot-l { 0%, 50% { transform: translateY(0); } 25% { transform: translateY(-1px); } 100% { transform: translateY(0); } }
+@keyframes sprite-foot-r { 0%, 50% { transform: translateY(0); } 75% { transform: translateY(-1px); } 100% { transform: translateY(0); } }
+#footer-mascot.walking .sprite-foot-l { animation: sprite-foot-l 0.32s steps(2) infinite; }
+#footer-mascot.walking .sprite-foot-r { animation: sprite-foot-r 0.32s steps(2) infinite; }
+
+/* Idle blink: eyes briefly shrink to 1px every few seconds. */
+@keyframes sprite-blink { 0%, 95%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+.sprite-eye-l, .sprite-eye-r { transform-origin: 50% 50%; animation: sprite-blink 4s infinite; }
+
+/* Bounce: whole body jumps. */
+@keyframes sprite-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+#footer-mascot.act-bounce .sprite-body,
+#footer-mascot.act-wave .sprite-body { animation: sprite-bounce 0.4s steps(3) infinite; }
+
+/* Dragging / falling: slight tilt + wiggle. */
+#footer-mascot.act-falling .sprite-body { transform: rotate(-6deg); }

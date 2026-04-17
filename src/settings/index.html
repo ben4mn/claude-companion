@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Claude Companion — Settings</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="settings-header">
+      <h1>Claude Companion</h1>
+      <p class="subtitle">Settings</p>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="general" aria-selected="true">General</button>
+      <button class="tab" role="tab" data-tab="animation">Animation</button>
+      <button class="tab" role="tab" data-tab="mode">Mode</button>
+      <button class="tab" role="tab" data-tab="companion">Companion</button>
+      <button class="tab" role="tab" data-tab="integration">Integration</button>
+      <button class="tab" role="tab" data-tab="apps">Apps</button>
+    </nav>
+
+    <main class="tab-panels">
+      <section class="panel" data-panel="general" aria-hidden="false">
+        <h2>General</h2>
+        <p class="muted">Tray visibility, hotkeys, and first-run options. (Phase 2.)</p>
+        <div class="config-path-block">
+          <label class="field-label">Settings file</label>
+          <code id="settings-path" class="config-path">Loading…</code>
+        </div>
+      </section>
+      <section class="panel" data-panel="animation" aria-hidden="true">
+        <h2>Animation</h2>
+        <p class="muted">Activity frequency, walk speed, speech chattiness, quiet hours. (Phase 1.)</p>
+      </section>
+      <section class="panel" data-panel="mode" aria-hidden="true">
+        <h2>Mode</h2>
+        <p class="muted">Choose between Claude-only and Desktop mode. (Phase 3.)</p>
+      </section>
+      <section class="panel" data-panel="companion" aria-hidden="true">
+        <h2>Companion</h2>
+        <p class="muted">Pick a companion and customize its colors. (Phase 4.)</p>
+      </section>
+      <section class="panel" data-panel="integration" aria-hidden="true">
+        <h2>Integration</h2>
+        <p class="muted">Claude Code hooks, MCP server, and memory access. (Phase 5.)</p>
+      </section>
+      <section class="panel" data-panel="apps" aria-hidden="true">
+        <h2>Apps</h2>
+        <p class="muted">Per-app commentary in desktop mode. (Phase 6.)</p>
+      </section>
+    </main>
+
+    <footer class="settings-footer">
+      <span id="status" class="status">Ready</span>
+    </footer>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

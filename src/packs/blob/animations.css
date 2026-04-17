@@ -1,0 +1,43 @@
+/* Blob pack — squish and wobble. No legs, so we fake walking via a
+   sideways scooch + bounce cycle. */
+
+#footer-mascot.face-left .blob-body { transform: scaleX(-1); transform-origin: 50% 100%; }
+
+/* Continuous idle squish — even standing still he breathes. */
+@keyframes blob-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50%      { transform: scale(1.04, 0.96); }
+}
+.blob-shape { transform-origin: 50% 100%; animation: blob-breathe 2.4s ease-in-out infinite; }
+
+/* Walk: exaggerated jelly waddle. */
+@keyframes blob-waddle {
+  0%, 100% { transform: scale(1, 1)     translateY(0); }
+  25%      { transform: scale(0.9, 1.1) translateY(-2px); }
+  50%      { transform: scale(1.1, 0.9) translateY(0); }
+  75%      { transform: scale(0.95, 1.05) translateY(-1px); }
+}
+#footer-mascot.walking .blob-shape { animation: blob-waddle 0.55s ease-in-out infinite; }
+
+/* Bounce: the signature move. */
+@keyframes blob-bounce {
+  0%, 100% { transform: scale(1, 1) translateY(0); }
+  50%      { transform: scale(1.15, 0.85) translateY(-5px); }
+}
+#footer-mascot.act-bounce .blob-shape,
+#footer-mascot.act-dance  .blob-shape,
+#footer-mascot.act-wave   .blob-shape { animation: blob-bounce 0.6s ease-in-out infinite; }
+
+/* Sleep: sag down. */
+#footer-mascot.act-sleep .blob-shape { transform: scale(1.1, 0.8); }
+
+/* Dragging / falling: stretch into a droplet. */
+#footer-mascot.act-falling .blob-shape {
+  animation: none;
+  transform: scale(0.85, 1.3);
+  transform-origin: 50% 0%;
+}
+
+/* Eye blink. */
+@keyframes blob-blink { 0%, 96%, 100% { transform: scaleY(1); } 98% { transform: scaleY(0.1); } }
+.blob-eye-l, .blob-eye-r { transform-origin: 50% 50%; animation: blob-blink 5s infinite; }

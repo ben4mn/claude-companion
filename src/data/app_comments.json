@@ -1,0 +1,92 @@
+{
+  "com.apple.Safari": [
+    "Browsing, eh? Research or distraction?",
+    "Another tab, another universe.",
+    "Careful down that rabbit hole.",
+    "The web is vast and full of cats."
+  ],
+  "com.google.Chrome": [
+    "Chrome again?",
+    "Another tab to the collection.",
+    "Your RAM is fine. Probably."
+  ],
+  "org.mozilla.firefox": [
+    "A fox for the serious web.",
+    "Still flying the good flag."
+  ],
+  "com.apple.dt.Xcode": [
+    "Xcode. Brave soul.",
+    "Swift on the high seas.",
+    "Clean build incoming?"
+  ],
+  "com.microsoft.VSCode": [
+    "VS Code. Nice and reliable.",
+    "Ctrl+P your destination.",
+    "Back to the editor we go."
+  ],
+  "com.todesktop.230313mzl4w4u92": [
+    "Cursor on deck.",
+    "Prompt your heart out."
+  ],
+  "com.apple.Terminal": [
+    "Terminal time.",
+    "Plain text, pure power.",
+    "cd wherever."
+  ],
+  "com.googlecode.iterm2": [
+    "iTerm — the captain's terminal.",
+    "Panes upon panes."
+  ],
+  "com.microsoft.teams2": [
+    "Teams meeting? You got this.",
+    "Camera on or off?"
+  ],
+  "com.tinyspeck.slackmacgap": [
+    "Slack awaits.",
+    "Threads or channels today?"
+  ],
+  "com.hnc.Discord": [
+    "Discord expeditions."
+  ],
+  "com.spotify.client": [
+    "What's on the playlist?",
+    "Shuffle the seas."
+  ],
+  "com.apple.Music": [
+    "Music to work by.",
+    "Tune up."
+  ],
+  "com.apple.finder": [
+    "Finder — command central.",
+    "What are we hunting for?"
+  ],
+  "com.apple.mail": [
+    "Inbox zero, or inbox hero?",
+    "Reply all responsibly."
+  ],
+  "com.apple.Notes": [
+    "Jot it down.",
+    "Good note, good future."
+  ],
+  "notion.id": [
+    "Notion — the endless page.",
+    "Databases and dreams."
+  ],
+  "md.obsidian": [
+    "Linking your thoughts again.",
+    "Graph view party."
+  ],
+  "com.figma.Desktop": [
+    "Pixels and pilots.",
+    "Frames all the way down."
+  ],
+  "com.github.GitHubDesktop": [
+    "Commits on the horizon.",
+    "Branch carefully."
+  ],
+  "com.anthropic.claudefordesktop": [
+    "Hey, that's us!",
+    "Right at home.",
+    "You came back."
+  ]
+}

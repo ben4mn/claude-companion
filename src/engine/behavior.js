@@ -13,6 +13,24 @@
 // All window positioning goes through Rust commands. The OS-native window
 // drag is NOT used — we control every pixel so the motion is smooth and
 // predictable.
+//
+// Animation settings (frequency, chattiness, walk speed, pool, quiet hours)
+// are consumed via activity-config.js and kept in `runtimeAnimationConfig`,
+// which is hydrated from settings.js at init and refreshed on every
+// settings_changed event — no restart required.
+
+import {
+  ACTIVITIES,
+  pickActivity,
+  shouldSpeak,
+  scaleDelay,
+  resolvePresetConfig,
+} from './activity-config.js';
+import { loadSettings, onSettingsChange, DEFAULTS } from './settings.js';
+import { attachCompanionContextMenu } from './context_menu.js';
+import { loadPack as loadPackFromFs, applyPackTheme } from './pack_loader.js';
+import { reactionFor, reactionForMcpTool } from './hook_reactions.js';
+import { shouldCommentOnApp, pickCommentFor } from './app_comments.js';
 
 const MASCOT_NAME = 'Pane';
 
@@ -40,25 +58,25 @@ let walkAbort = 0;
 let invoke = null;
 let win = null;
 
-/* --- Activity catalogue --- */
-const ACTIVITIES = [
-  { name: 'stand',       cls: 'act-stand',       min: 20000, max: 40000 },
-  { name: 'look',        cls: 'act-look',        min:  8000, max: 14000 },
-  { name: 'wave',        cls: 'act-wave',        min:  4000, max:  6000, speech: 'wave' },
-  { name: 'sleep',       cls: 'act-sleep',       min: 30000, max: 60000, speech: 'sleep' },
-  { name: 'stretch',     cls: 'act-stretch',     min:  5000, max:  8000 },
-  { name: 'nod',         cls: 'act-nod',         min:  4000, max:  6000 },
-  { name: 'think',       cls: 'act-think',       min: 15000, max: 25000 },
-  { name: 'dance',       cls: 'act-dance',       min:  4000, max:  7000 },
-  { name: 'type',        cls: 'act-type',        min: 10000, max: 18000 },
-  { name: 'bounce',      cls: 'act-bounce',      min:  3000, max:  5000 },
-  { name: 'sweep',       cls: 'act-sweep',       min:  8000, max: 14000, speech: 'sweep' },
-  { name: 'phone',       cls: 'act-phone',       min: 10000, max: 20000, speech: 'phone' },
-  { name: 'code',        cls: 'act-code',        min: 12000, max: 22000, speech: 'code' },
-  { name: 'mop',         cls: 'act-mop',         min:  8000, max: 14000 },
-  { name: 'shimmy',      cls: 'act-shimmy',      min:  3000, max:  5000 },
-  { name: 'antenna-fix', cls: 'act-antenna-fix', min:  2000, max:  3000 },
-];
+// Live animation config. Updated on settings_changed so tweaks take effect
+// immediately, without relaunching the app. Starts at shipped defaults so
+// doActivity / scheduleNext never see an undefined config.
+let runtimeAnimationConfig = { ...DEFAULTS.animation };
+
+// Memory facts pulled from ~/.claude memory files. Populated at init when
+// memory access is enabled; consulted before idle speech to occasionally
+// drop a personalized line. Empty array = never substitute.
+let memoryFacts = [];
+
+// App-awareness state — populated at init, updated on settings_changed.
+// appCommentsMap: static library of per-bundle comments, loaded once.
+// appAwarenessSettings: user preferences (enabled, allowlist, frequencyMs).
+// currentMode: tracked so app comments are gated to desktop mode only.
+// lastAppCommentAt: timestamp of the last fired comment for throttling.
+let appCommentsMap = {};
+let appAwarenessSettings = { enabled: false, allowlist: [], frequencyMs: 45000 };
+let currentMode = 'claudeOnly';
+let lastAppCommentAt = 0;
 
 const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -79,20 +97,52 @@ function clearActivity() {
   }
 }
 
-function showSpeech(text, duration = 3000, priority = false) {
+function showSpeech(text, duration, priority = false) {
   if (!speechEl || !text) return;
   const now = Date.now();
   if (!priority && now - lastSpeechAt < 6000) return;
   lastSpeechAt = now;
+  // Auto-scale duration by text length when the caller didn't specify one:
+  // ~25 chars/sec + 1.5s grace, floored at 2.5s, capped at 10s. Explicit
+  // callers (MCP companion_say, __pane.say) still win.
+  const dur = duration ?? Math.min(10000, Math.max(2500, 1500 + text.length * 40));
   speechEl.textContent = text;
   speechEl.classList.add('visible');
-  setTimeout(() => speechEl.classList.remove('visible'), duration);
+  setTimeout(() => speechEl.classList.remove('visible'), dur);
 }
 
 function speechFor(activityName) {
+  // 25% chance to substitute a memory-flavored line when we have any.
+  // The bubble wraps now (see base.css), so we no longer pre-truncate —
+  // but still cap at 180 chars to avoid dominating the window with
+  // whatever a user wrote in a memory file.
+  if (memoryFacts.length > 0 && Math.random() < 0.25) {
+    const fact = memoryFacts[Math.floor(Math.random() * memoryFacts.length)];
+    return fact.length > 180 ? `${fact.slice(0, 177)}\u2026` : fact;
+  }
   const key = speechPack.activity?.[activityName];
   if (!key) return null;
   return Array.isArray(key) ? pick(key) : key;
+}
+
+/** Apply a reaction object from hook_reactions.js to the companion: optional
+ *  animation class (auto-cleared after a short window) + optional speech. */
+function applyReaction(reaction) {
+  if (!reaction) return;
+  if (reaction.cls) {
+    clearActivity();
+    mascotEl.classList.add(reaction.cls);
+    // 3.5s is long enough for most activity keyframes to show a couple of
+    // cycles without feeling stuck. scheduleNext will take over after.
+    if (currentTimer) clearTimeout(currentTimer);
+    currentTimer = setTimeout(() => {
+      clearActivity();
+      scheduleNext();
+    }, 3500);
+  }
+  if (reaction.speech) {
+    showSpeech(reaction.speech, reaction.speechDuration ?? 3000, true);
+  }
 }
 
 /* ============================================================================
@@ -175,7 +225,10 @@ async function walk() {
 
   const targetX = rand(minX, maxX);
   const distance = Math.abs(targetX - currentX);
-  const duration = Math.max(600, distance * 10); // ms
+  const resolved = resolvePresetConfig(runtimeAnimationConfig);
+  // walkSpeed < 1 → slower walks (longer duration). Invert the multiplier.
+  const walkScale = resolved.walkSpeed > 0 ? 1 / resolved.walkSpeed : 1;
+  const duration = Math.max(600, distance * 10 * walkScale); // ms
 
   facingLeft = targetX < currentX;
   mascotEl.classList.toggle('face-left', facingLeft);
@@ -231,14 +284,20 @@ async function walk() {
 
 /* ============================================================================
  * Activities — the random idle repertoire. Only fires in GROUNDED state.
+ *
+ * Activity selection, speech probability, and inter-activity delay all
+ * pull from runtimeAnimationConfig via activity-config helpers — so the
+ * user's preset + sliders (or the current quiet-hours window) take effect
+ * on the very next scheduler tick.
  * ========================================================================== */
 function doActivity() {
   if (paneState !== STATE.GROUNDED) return scheduleNext();
-  const activity = pick(ACTIVITIES);
+  const resolved = resolvePresetConfig(runtimeAnimationConfig);
+  const activity = pickActivity(ACTIVITIES, runtimeAnimationConfig, new Date(), Math.random);
   clearActivity();
   mascotEl.classList.add(activity.cls);
 
-  if (activity.speech) {
+  if (activity.speech && shouldSpeak(resolved.speechChattiness)) {
     const text = speechFor(activity.speech);
     if (text) showSpeech(text);
   }
@@ -253,8 +312,12 @@ function doActivity() {
 function scheduleNext() {
   if (currentTimer) clearTimeout(currentTimer);
   if (paneState !== STATE.GROUNDED) return;
+  const resolved = resolvePresetConfig(runtimeAnimationConfig);
   const shouldWalk = Math.random() < 0.35;
-  const delay = rand(2000, 4000);
+  const base = rand(2000, 4000);
+  // activityFrequency > 1 → longer delays (less frequent); < 1 → more frequent.
+  // scaleDelay clamps to a positive baseline so the scheduler can't spin.
+  const delay = scaleDelay(base, resolved.activityFrequency);
   currentTimer = setTimeout(() => {
     if (paneState !== STATE.GROUNDED) return;
     if (shouldWalk) walk();
@@ -368,7 +431,11 @@ function setupInteraction() {
   if (!mascotEl) return;
 
   mascotEl.addEventListener('mousedown', (e) => {
-    // Any mousedown on Pane = pick up.
+    // Only left-click picks him up. Right-click (button 2) is reserved for
+    // the context menu — catching it here was triggering the HELD state
+    // before the contextmenu event fired, which made right-click feel like
+    // a drag instead of a menu open.
+    if (e.button !== 0) return;
     enterHeld(e).catch(() => {});
   });
 
@@ -431,19 +498,11 @@ function timeOfDayGreeting() {
   if (pool?.length) setTimeout(() => showSpeech(pick(pool), 4000, true), 6000);
 }
 
-async function loadPack(packId = 'pane') {
+async function loadPack(packId = 'pane', userThemes = {}) {
   try {
-    const manifestRes = await fetch(`packs/${packId}/manifest.json`);
-    manifest = await manifestRes.json();
-    if (manifest.theme) {
-      for (const [k, v] of Object.entries(manifest.theme)) {
-        document.documentElement.style.setProperty(k, v);
-      }
-    }
-    if (manifest.files?.speech) {
-      const speechRes = await fetch(`packs/${packId}/${manifest.files.speech}`);
-      speechPack = await speechRes.json();
-    }
+    const { manifest: m, speech } = await loadPackFromFs(packId, userThemes);
+    manifest = m;
+    speechPack = speech || speechPack;
   } catch (err) {
     console.warn(`[${MASCOT_NAME}] pack load failed:`, err);
   }
@@ -463,7 +522,6 @@ async function waitForTauri(timeoutMs = 3000) {
  * ========================================================================== */
 async function init() {
   if (!mascotEl) return;
-  await loadPack('pane');
 
   const tauri = await waitForTauri();
   invoke = tauri?.core?.invoke ?? null;
@@ -477,9 +535,116 @@ async function init() {
     try { cachedScale = await win.scaleFactor(); } catch (e) {}
   }
 
+  // Hydrate runtime config + active companion pack from persisted settings.
+  // The pack load is async and DOM-touching (it swaps the body SVG + link
+  // tag), so we do it here rather than at module scope.
+  let activePackId = 'pane';
+  let userThemes = {};
+  try {
+    const loaded = await loadSettings();
+    if (loaded?.animation) runtimeAnimationConfig = loaded.animation;
+    if (loaded?.companion?.activePack) activePackId = loaded.companion.activePack;
+    if (loaded?.companion?.themes) userThemes = loaded.companion.themes;
+    if (loaded?.appAwareness) appAwarenessSettings = loaded.appAwareness;
+    if (loaded?.mode?.mode) currentMode = loaded.mode.mode;
+  } catch (e) { /* defaults already installed */ }
+
+  // Preload the static app-comments library. Silent on failure — app
+  // awareness is opt-in and non-critical.
+  try {
+    const res = await fetch('data/app_comments.json');
+    if (res.ok) appCommentsMap = await res.json();
+  } catch (_) { /* fine */ }
+
+  await loadPack(activePackId, userThemes);
+
+  // Watch for live changes. Distinguish two paths:
+  //   - Pack ID changed → full reload (body SVG + stylesheet swap).
+  //   - Pack ID same, theme changed → just reapply CSS vars. Avoids the
+  //     flicker where the companion briefly vanished / dropped off-screen
+  //     during a color-picker drag because the body was being rebuilt on
+  //     every debounced save.
+  let lastPackId = activePackId;
+  let lastThemesJson = JSON.stringify(userThemes);
+  onSettingsChange(async (next) => {
+    if (next?.animation) runtimeAnimationConfig = next.animation;
+    if (next?.appAwareness) appAwarenessSettings = next.appAwareness;
+    if (next?.mode?.mode) currentMode = next.mode.mode;
+    const nextPackId = next?.companion?.activePack ?? lastPackId;
+    const nextThemes = next?.companion?.themes ?? {};
+    const nextThemesJson = JSON.stringify(nextThemes);
+    if (nextPackId !== lastPackId) {
+      lastPackId = nextPackId;
+      lastThemesJson = nextThemesJson;
+      await loadPack(nextPackId, nextThemes);
+    } else if (nextThemesJson !== lastThemesJson) {
+      lastThemesJson = nextThemesJson;
+      await applyPackTheme(nextPackId, nextThemes);
+    }
+  }).catch(() => {});
+
   setupInteraction();
   setupClickThrough();
+  attachCompanionContextMenu(mascotEl, invoke);
   timeOfDayGreeting();
+
+  // Subscribe to the IPC event bus — Claude Code hooks + MCP tool calls
+  // flow through here as `hook_event` events. A `type: "mcp"` event carries
+  // a nested { tool, arguments } payload; anything else is a raw hook.
+  if (tauri?.event?.listen) {
+    tauri.event.listen('hook_event', (evt) => {
+      const body = evt?.payload;
+      if (!body || typeof body.type !== 'string') return;
+      let reaction;
+      if (body.type === 'mcp') {
+        const inner = body.payload ?? {};
+        reaction = reactionForMcpTool(inner.tool, inner.arguments);
+      } else {
+        reaction = reactionFor(body);
+      }
+      if (!reaction) return;
+      // Ask Rust to keep Pane visible for a few seconds so this reaction
+      // isn't swallowed by the occlusion rule. Fire-and-forget — the
+      // applyReaction below runs regardless.
+      if (invoke) invoke('request_reaction_window').catch(() => {});
+      applyReaction(reaction);
+    }).catch((e) => console.warn('[hook_event] listen failed', e));
+
+    // Phase-6 app awareness: Rust emits `frontmost_changed` with the new
+    // bundle ID. Gate through shouldCommentOnApp — handles allowlist,
+    // frequency throttle, mode-gate, and engaged-state check — then drop
+    // a random line from the app's comments array as speech.
+    tauri.event.listen('frontmost_changed', (evt) => {
+      const bundleId = evt?.payload;
+      if (typeof bundleId !== 'string') return;
+      const engaged = paneState !== STATE.GROUNDED;
+      const now = Date.now();
+      const gate = {
+        bundleId,
+        mode: currentMode,
+        enabled: !!appAwarenessSettings.enabled,
+        allowlist: appAwarenessSettings.allowlist ?? [],
+        frequencyMs: appAwarenessSettings.frequencyMs ?? 45000,
+        lastCommentAt: lastAppCommentAt,
+        now,
+        engaged,
+        commentsMap: appCommentsMap,
+      };
+      if (!shouldCommentOnApp(gate)) return;
+      const line = pickCommentFor(bundleId, appCommentsMap);
+      if (!line) return;
+      lastAppCommentAt = now;
+      showSpeech(line, undefined, true);
+    }).catch((e) => console.warn('[frontmost_changed] listen failed', e));
+  }
+
+  // Load memory facts if the user has opted in. Silent on failure.
+  if (invoke) {
+    try {
+      const lines = await invoke('memory_lines');
+      if (Array.isArray(lines)) memoryFacts = lines;
+    } catch (e) { /* fine — memory is optional */ }
+  }
 
   // Continuous ground poll so Pane follows Claude if the user moves or
   // resizes Claude's window. Runs at ~16Hz: fast enough that a window drag
