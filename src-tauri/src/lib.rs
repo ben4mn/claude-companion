@@ -56,6 +56,34 @@ fn cursor_logical() -> Result<(f64, f64), String> {
     Ok((mouse.x, screen_height - mouse.y))
 }
 
+/// Capture the drag-grab offset at mousedown using Rust's cursor/window
+/// coordinate system — the SAME system pane_follow_cursor reads from. This
+/// avoids the coord mismatch that happens when JS captures `e.screenX/Y`
+/// (CSS-screen pixels) and Rust reads `NSEvent.mouseLocation` (macOS global
+/// points with bottom origin flipped): on Retina or multi-monitor setups the
+/// two can disagree, making Pane jump by tens of pixels the moment the user
+/// picks him up.
+///
+/// Returns (offset_x, offset_y) — how far the cursor is from the window's
+/// top-left, in the same logical-pixel space set_position expects.
+#[tauri::command]
+fn pane_drag_start(window: tauri::WebviewWindow) -> Result<(f64, f64), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let (mx, my) = cursor_logical()?;
+        let win_pos = window.outer_position().map_err(|e| e.to_string())?;
+        let scale = window.scale_factor().map_err(|e| e.to_string())?;
+        let wx = win_pos.x as f64 / scale;
+        let wy = win_pos.y as f64 / scale;
+        return Ok((mx - wx, my - wy));
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = window;
+        Err("unsupported platform".into())
+    }
+}
+
 /// Follow the cursor: set the window's top-left so the cursor stays at a
 /// fixed offset inside Pane. Used by the JS HELD loop at 60fps.
 ///
@@ -183,7 +211,10 @@ fn is_claude_running() -> bool {
         let apps = ws.runningApplications();
         for app in apps.iter() {
             if let Some(bid) = app.bundleIdentifier() {
-                if bid.to_string() == CLAUDE_BUNDLE_ID {
+                // Match the main app or any Electron helper
+                // (com.anthropic.claudefordesktop.helper[.Renderer|.GPU|.Plugin]).
+                // Any of these present means Claude is alive.
+                if bid.to_string().starts_with(CLAUDE_BUNDLE_ID) {
                     return true;
                 }
             }
@@ -203,6 +234,7 @@ enum Frontmost {
     Other,
 }
 
+
 #[cfg(target_os = "macos")]
 fn frontmost_app() -> Frontmost {
     use objc2_app_kit::NSWorkspace;
@@ -211,7 +243,10 @@ fn frontmost_app() -> Frontmost {
         if let Some(app) = ws.frontmostApplication() {
             if let Some(bid) = app.bundleIdentifier() {
                 let s = bid.to_string();
-                if s == CLAUDE_BUNDLE_ID {
+                // Prefix match covers Electron helpers (.helper, .helper.Renderer,
+                // .helper.GPU, .helper.Plugin). When Claude's cowork/code view
+                // briefly hands focus to a helper, we still want to stay visible.
+                if s.starts_with(CLAUDE_BUNDLE_ID) {
                     return Frontmost::Claude;
                 }
                 if s == COMPANION_BUNDLE_ID {
@@ -223,10 +258,34 @@ fn frontmost_app() -> Frontmost {
     Frontmost::Other
 }
 
+/// PID of Claude Desktop's main process (not a helper). Used as a tiebreaker
+/// when find_claude_window sees multiple candidate windows — we want the one
+/// owned by the main app, not any ancillary process.
+#[cfg(target_os = "macos")]
+fn claude_main_pid() -> Option<i32> {
+    use objc2_app_kit::NSWorkspace;
+    unsafe {
+        let ws = NSWorkspace::sharedWorkspace();
+        let apps = ws.runningApplications();
+        for app in apps.iter() {
+            if let Some(bid) = app.bundleIdentifier() {
+                if bid.to_string() == CLAUDE_BUNDLE_ID {
+                    return Some(app.processIdentifier());
+                }
+            }
+        }
+    }
+    None
+}
+
 /// Locate Claude Desktop's main on-screen window via CGWindowListCopyWindowInfo.
 /// Returns (x, y, width, height) in macOS screen points (top-left origin).
 /// Skips off-screen, minimized, and non-standard-layer windows, and rejects
 /// anything smaller than a real app window (tooltips, popovers, tray icons).
+///
+/// CGWindowListCopyWindowInfo returns windows in z-order (front→back), so the
+/// first valid match is usually correct. When Claude has multiple windows we
+/// prefer the one owned by the main Claude PID over any other candidate.
 #[cfg(target_os = "macos")]
 fn find_claude_window() -> Option<(f64, f64, f64, f64)> {
     use core_foundation::array::CFArray;
@@ -248,12 +307,16 @@ fn find_claude_window() -> Option<(f64, f64, f64, f64)> {
         unsafe { CFArray::wrap_under_create_rule(array_ref) };
 
     let owner_key = CFString::from_static_string("kCGWindowOwnerName");
+    let pid_key = CFString::from_static_string("kCGWindowOwnerPID");
     let layer_key = CFString::from_static_string("kCGWindowLayer");
     let bounds_key = CFString::from_static_string("kCGWindowBounds");
     let x_key = CFString::from_static_string("X");
     let y_key = CFString::from_static_string("Y");
     let w_key = CFString::from_static_string("Width");
     let h_key = CFString::from_static_string("Height");
+
+    let main_pid = claude_main_pid();
+    let mut first_match: Option<(f64, f64, f64, f64)> = None;
 
     for i in 0..list.len() {
         let Some(dict_ptr) = list.get(i) else { continue };
@@ -299,9 +362,20 @@ fn find_claude_window() -> Option<(f64, f64, f64, f64)> {
             continue;
         }
 
-        return Some((x, y, w, h));
+        // Prefer main-PID window; remember first otherwise as fallback.
+        if let (Some(target_pid), Some(pid_ptr)) =
+            (main_pid, dict.find(pid_key.as_concrete_TypeRef() as *const _))
+        {
+            let pid: CFNumber = unsafe { CFNumber::wrap_under_get_rule(*pid_ptr as _) };
+            if pid.to_i32() == Some(target_pid) {
+                return Some((x, y, w, h));
+            }
+        }
+        if first_match.is_none() {
+            first_match = Some((x, y, w, h));
+        }
     }
-    None
+    first_match
 }
 
 #[cfg(target_os = "macos")]
@@ -313,16 +387,11 @@ fn spawn_claude_watcher(app: tauri::AppHandle) {
         let margin_right = 56.0f64;
         let margin_bottom = 56.0f64;
 
-        // We only snap Pane to bottom-right on the hidden→visible transition.
-        // That way, once he's visible, dragging him around sticks — the
-        // watcher doesn't fight the user.
-        let mut last_visible: Option<bool> = None;
-        let mut ticks_since_claude_seen: u32 = 0;
-        let mut ticks_away_from_claude: u32 = 0;
         // Snap to bottom-right of Claude ONLY on the first show of this
         // process's lifetime. After that, JS owns position — any future
         // hide/show cycle leaves Pane wherever the user put him.
         let mut has_positioned_initially = false;
+        let mut ticks_since_claude_seen: u32 = 0;
 
         loop {
             std::thread::sleep(Duration::from_millis(350));
@@ -331,13 +400,15 @@ fn spawn_claude_watcher(app: tauri::AppHandle) {
             // the grace-period timer can fire mid-drag and yank the window
             // out from under the user's cursor.
             if INTERACTING.load(Ordering::Relaxed) {
-                ticks_away_from_claude = 0;
                 continue;
             }
 
             if !is_claude_running() {
+                // Claude's helper processes can briefly fail the runningApplications
+                // check during view transitions. Require a sustained absence
+                // (~14s) before quitting so a view switch doesn't silently kill us.
                 ticks_since_claude_seen += 1;
-                if ticks_since_claude_seen > 3 {
+                if ticks_since_claude_seen > 40 {
                     app.exit(0);
                     break;
                 }
@@ -349,25 +420,20 @@ fn spawn_claude_watcher(app: tauri::AppHandle) {
                 continue;
             };
 
-            let front = frontmost_app();
-            let should_be_visible = matches!(front, Frontmost::Claude | Frontmost::Companion);
+            // Visibility rule: show Pane whenever Claude is RUNNING. We
+            // explicitly do NOT tie visibility to find_claude_window —
+            // it can transiently return None during view transitions, full-
+            // screen handoffs, or when no Claude window matches our size
+            // filter, which would make Pane flicker. Running == visible.
+            let claude_window = find_claude_window();
+            let is_visible = window.is_visible().unwrap_or(false);
 
-            if !should_be_visible {
-                ticks_away_from_claude += 1;
-                if ticks_away_from_claude >= 3 && last_visible != Some(false) {
-                    let _ = window.hide();
-                    last_visible = Some(false);
-                }
-                continue;
-            }
-            ticks_away_from_claude = 0;
-
-            if last_visible != Some(true) {
-                // Only do the bottom-right snap the very first time. On
-                // subsequent hide→show cycles, JS's ground-poll will put
-                // Pane back on the line at whatever X he last had.
+            // Self-healing: drive visibility off the window's ACTUAL state.
+            // If anything ever desyncs (e.g., a silently-failed show/hide),
+            // the next tick corrects it.
+            if !is_visible {
                 if !has_positioned_initially {
-                    if let Some((x, y, w, h)) = find_claude_window() {
+                    if let Some((x, y, w, h)) = claude_window {
                         let size = window.outer_size().ok();
                         let scale = window.scale_factor().unwrap_or(1.0);
                         let (comp_w, comp_h) = size
@@ -380,7 +446,6 @@ fn spawn_claude_watcher(app: tauri::AppHandle) {
                     }
                 }
                 let _ = window.show();
-                last_visible = Some(true);
             }
         }
     });
@@ -395,6 +460,7 @@ pub fn run() {
             pane_set_position,
             pane_ground,
             pane_set_interacting,
+            pane_drag_start,
         ])
         .setup(|app| {
             #[cfg(target_os = "macos")]
@@ -409,11 +475,37 @@ pub fn run() {
 
             let menu = Menu::with_items(app, &[&show_item, &hide_item, &pet_item, &quit_item])?;
 
-            let _tray = TrayIconBuilder::new()
+            // Use the bundle's default app icon for the tray. Without an
+            // explicit icon, TrayIconBuilder produces a tray item with no
+            // visible image — there's nothing in the menu bar to click,
+            // which defeats the point of having a tray.
+            let tray_builder = TrayIconBuilder::new();
+            let tray_builder = if let Some(icon) = app.default_window_icon() {
+                tray_builder.icon(icon.clone())
+            } else {
+                tray_builder
+            };
+            let _tray = tray_builder
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
                         if let Some(w) = app.get_webview_window("companion") {
+                            // Reposition onto Claude's window before showing.
+                            // If Pane's last position was outside Claude's
+                            // current bounds, this guarantees he lands somewhere
+                            // the user can actually see — the tray item is the
+                            // user's escape hatch from any stuck state.
+                            #[cfg(target_os = "macos")]
+                            if let Some((x, y, cw, ch)) = find_claude_window() {
+                                let size = w.outer_size().ok();
+                                let scale = w.scale_factor().unwrap_or(1.0);
+                                let (comp_w, comp_h) = size
+                                    .map(|s| (s.width as f64 / scale, s.height as f64 / scale))
+                                    .unwrap_or((120.0, 160.0));
+                                let target_x = (x + cw - comp_w - 56.0).round();
+                                let target_y = (y + ch - comp_h - 56.0).round();
+                                let _ = w.set_position(LogicalPosition::new(target_x, target_y));
+                            }
                             let _ = w.show();
                         }
                     }
@@ -443,6 +535,11 @@ pub fn run() {
                 {
                     let _ = win.set_visible_on_all_workspaces(true);
                 }
+                // Always-on-top ensures Pane stays above Claude (and any
+                // other window). The alternative — normal-level + pulse-to-
+                // front on Claude-frontmost rising edges — is unreliable on
+                // macOS: NSWindow can't be reordered relative to a window
+                // owned by another process without AX APIs.
                 let _ = win.set_always_on_top(true);
                 // Start hidden — the Claude watcher decides when to show us.
                 let _ = win.hide();

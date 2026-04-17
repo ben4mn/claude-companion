@@ -31,6 +31,10 @@ let grabOffset = null;          // cursor-to-window-top-left offset captured on 
 let fallVelocity = 0;
 let cachedScale = 1;
 let cachedGround = null;        // last known { y, minX, maxX } from pane_ground
+// Incrementing token: every time we bump this, any walk tick holding the
+// previous value aborts before its next IPC call. Prevents stale set_position
+// calls from landing after the user picks Pane up or the ground changes.
+let walkAbort = 0;
 
 // Tauri handles (populated in init)
 let invoke = null;
@@ -103,7 +107,20 @@ async function refreshGround() {
   try {
     const g = await invoke('pane_ground');
     if (!g) return;
-    cachedGround = { y: g[0], minX: g[1], maxX: g[2] };
+    const prev = cachedGround;
+    const next = { y: g[0], minX: g[1], maxX: g[2] };
+    cachedGround = next;
+    // If Claude's window moved meaningfully, abort any in-flight walk so it
+    // doesn't keep animating toward stale coords — the walk will resume on
+    // the next scheduler tick using the fresh ground.
+    if (
+      prev &&
+      (Math.abs(prev.y - next.y) > 2 ||
+        Math.abs(prev.minX - next.minX) > 2 ||
+        Math.abs(prev.maxX - next.maxX) > 2)
+    ) {
+      walkAbort++;
+    }
   } catch (e) {}
 }
 
@@ -111,6 +128,10 @@ async function snapToGround() {
   if (paneState !== STATE.GROUNDED) return;
   await refreshGround();
   if (!cachedGround || !invoke || !win) return;
+  // While the walk animation owns X, don't also write X here — that was the
+  // source of visible jank when walk and the poll disagreed. The walk tick
+  // now re-reads cachedGround.y each frame, so Y stays correct during walks.
+  if (mascotEl && mascotEl.classList.contains('walking')) return;
   try {
     const pos = await win.outerPosition();
     const currentX = pos.x / cachedScale;
@@ -166,10 +187,15 @@ async function walk() {
 
   const startX = currentX;
   const startTime = performance.now();
+  // Snapshot the abort token; any bump invalidates this walk cycle.
+  const myAbort = walkAbort;
 
   return new Promise((resolve) => {
     const tick = async (now) => {
-      if (paneState !== STATE.GROUNDED) {
+      // Bail before issuing IPC if state changed or abort was bumped. Checking
+      // BOTH sides of the await is essential — otherwise the in-flight
+      // set_position completes after HELD takes over and yanks Pane backward.
+      if (paneState !== STATE.GROUNDED || myAbort !== walkAbort) {
         mascotEl.classList.remove('walking');
         resolve();
         return;
@@ -178,7 +204,15 @@ async function walk() {
       // ease-in-out
       const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       const x = startX + (targetX - startX) * eased;
-      try { await invoke('pane_set_position', { x, y: groundY }); } catch (e) {}
+      // Re-read ground in case Claude moved mid-walk, so we're targeting the
+      // current bottom line, not the one walk() snapshotted at start.
+      const liveGroundY = cachedGround ? cachedGround.y : groundY;
+      try { await invoke('pane_set_position', { x, y: liveGroundY }); } catch (e) {}
+      if (paneState !== STATE.GROUNDED || myAbort !== walkAbort) {
+        mascotEl.classList.remove('walking');
+        resolve();
+        return;
+      }
       if (t < 1) {
         requestAnimationFrame(tick);
       } else {
@@ -231,9 +265,12 @@ function scheduleNext() {
 /* ============================================================================
  * HELD state — window follows cursor at 60fps.
  * ========================================================================== */
-async function enterHeld(e) {
+async function enterHeld(_e) {
   if (currentTimer) clearTimeout(currentTimer);
   clearActivity();
+  // Abort any in-flight walk tick so its pending pane_set_position doesn't
+  // land after the held loop takes over and yank Pane backward.
+  walkAbort = (walkAbort || 0) + 1;
   paneState = STATE.HELD;
   // act-falling = arms up flailing + panic eyes. Exactly the "yoink!" vibe.
   mascotEl.classList.add('act-falling');
@@ -242,11 +279,13 @@ async function enterHeld(e) {
   // Freeze the Rust watcher so it can't hide/reposition Pane mid-drag.
   try { await invoke('pane_set_interacting', { active: true }); } catch (e) {}
 
+  // Capture the grab offset in Rust's own cursor/window coord system so the
+  // held loop — which also reads the cursor from Rust — has a consistent
+  // reference. Using e.screenX/Y can disagree with NSEvent.mouseLocation on
+  // Retina or multi-monitor setups, causing a pickup jump.
   try {
-    const pos = await win.outerPosition();
-    const wx = pos.x / cachedScale;
-    const wy = pos.y / cachedScale;
-    grabOffset = [e.screenX - wx, e.screenY - wy];
+    const off = await invoke('pane_drag_start');
+    grabOffset = [off[0], off[1]];
   } catch (err) {
     grabOffset = [mascotEl.offsetWidth / 2, mascotEl.offsetHeight / 2];
   }
@@ -442,12 +481,14 @@ async function init() {
   setupClickThrough();
   timeOfDayGreeting();
 
-  // Continuous ground poll so Pane follows Claude if the user resizes the
-  // Claude window while Pane is grounded.
+  // Continuous ground poll so Pane follows Claude if the user moves or
+  // resizes Claude's window. Runs at ~16Hz: fast enough that a window drag
+  // looks like smooth following rather than discrete jumps, slow enough
+  // that the IPC cost stays negligible.
   setInterval(() => {
     if (paneState === STATE.GROUNDED) snapToGround();
     else refreshGround();
-  }, 400);
+  }, 60);
 
   // Initial snap to the ground line.
   await snapToGround();
