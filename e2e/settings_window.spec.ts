@@ -19,7 +19,7 @@ describe('settings window', () => {
     await browser.switchToWindow(handles[handles.length - 1]);
 
     const header = await $('.settings-header h1');
-    await expect(header).toHaveText('Claude Companion');
+    await expect(header).toHaveText('Companion');
 
     const tabs = await $$('.tab');
     expect(await tabs.length).toBeGreaterThanOrEqual(6);

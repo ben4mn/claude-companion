@@ -1,4 +1,4 @@
-// Mode tab — Claude-only vs Desktop.
+// Mode tab — follow Claude window vs desktop-wide.
 //
 // The radio toggle is live: picking a mode saves immediately, the Rust
 // watcher reads the new mode on its next ~350ms tick, and Pane transitions

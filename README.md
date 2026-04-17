@@ -1,15 +1,15 @@
 <div align="center">
 
-<img src="docs/og-image.png" alt="Claude Companion — animated companions for the Claude Desktop app on macOS" width="100%" />
+<img src="docs/og-image.png" alt="Companion — animated companions for the Claude Desktop app on macOS" width="100%" />
 
-# Claude Companion
+# Companion
 
 **Animated companions for the [Claude Desktop](https://claude.com/download) app on macOS.**
 
 A tiny always-on-top overlay that lives on the bottom edge of your Claude window.
 Pick one up. Throw them around. Watch them land.
 
-[**Live demo →**](https://ben4mn.github.io/claude-companion/) &nbsp;·&nbsp;
+[**Live demo →**](https://ben4mn.github.io/companion/) &nbsp;·&nbsp;
 [Install](#install) &nbsp;·&nbsp;
 [How it works](#how-it-works) &nbsp;·&nbsp;
 [Roadmap](#roadmap)
@@ -19,7 +19,7 @@ Pick one up. Throw them around. Watch them land.
 [![Rust + TypeScript](https://img.shields.io/badge/Rust_%2B_TypeScript-000?logo=rust&logoColor=white)](#architecture)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2a6df0.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-v0.1-orange.svg)](#roadmap)
-[![GitHub stars](https://img.shields.io/github/stars/ben4mn/claude-companion?style=social)](https://github.com/ben4mn/claude-companion)
+[![GitHub stars](https://img.shields.io/github/stars/ben4mn/companion?style=social)](https://github.com/ben4mn/companion)
 
 </div>
 
@@ -45,7 +45,7 @@ Five companions ship out of the box. Swap any time from the tray menu.
 
 ## Why
 
-Anthropic doesn't ship a plugin API for putting custom visual components inside the Claude Desktop window — `.mcpb` Desktop Extensions add tools but no UI, and MCP-UI widgets only render inside chat messages. Claude Companion gets the same effect by running as a separate, always-on-top, transparent, click-through Tauri window that tracks Claude's frontmost state and window bounds.
+Anthropic doesn't ship a plugin API for putting custom visual components inside the Claude Desktop window — `.mcpb` Desktop Extensions add tools but no UI, and MCP-UI widgets only render inside chat messages. Companion gets the same effect by running as a separate, always-on-top, transparent, click-through Tauri window that tracks Claude's frontmost state and window bounds.
 
 **Claude Desktop is never touched.**
 
@@ -54,13 +54,19 @@ Anthropic doesn't ship a plugin API for putting custom visual components inside 
 Requires Rust + Node. macOS only for now.
 
 ```bash
-git clone https://github.com/ben4mn/claude-companion.git
-cd claude-companion
-pnpm install        # or npm install
-pnpm tauri dev      # first build compiles the Rust tree (~3–5 min)
+git clone https://github.com/ben4mn/companion.git
+cd companion
+npm install
+npm run install:app   # builds the Tauri app and copies it to /Applications
 ```
 
-Your companion appears bottom-right of your Claude Desktop window. Quit via the menu-bar tray icon.
+Launch from `/Applications` (or Spotlight — search "Companion"). Your companion appears bottom-right of your Claude Desktop window, restoring whatever settings you last used. Optional: enable **Launch at login** in Settings to start with your machine. Quit via the menu-bar tray icon.
+
+For iterative development:
+
+```bash
+npm run dev         # runs tauri dev, rebuilds on change
+```
 
 ## How it works
 
@@ -103,7 +109,7 @@ Adding a new character is a matter of dropping a folder here and pointing `loadP
 ## Architecture
 
 ```
-claude-companion/
+companion/
 ├── src-tauri/              # Rust — window, watcher, IPC commands
 │   ├── src/lib.rs          # Main entry + command dispatch
 │   ├── src/app_watcher.rs  # Tracks Claude's window bounds & frontmost state
@@ -115,7 +121,7 @@ claude-companion/
 │   ├── engine/behavior.js  # State machine: grounded / held / falling
 │   ├── styles/base.css     # Pack-agnostic window layout
 │   └── packs/              # Companion packs (pane, blob, cat, ghost, sprite)
-└── docs/                   # GitHub Pages site — https://ben4mn.github.io/claude-companion/
+└── docs/                   # GitHub Pages site — https://ben4mn.github.io/companion/
 ```
 
 **Rust commands (JS-callable)**
@@ -138,7 +144,7 @@ claude-companion/
 
 - **v0.2** — import the remaining PaneStreet animations (moonwalk, watching-build, impressed, falling-arms already present; hiccup / stumble / startled / double-take / yawn wired into the random idle picker)
 - **v0.3** — optional bundled MCP server so Claude (the model) can emit structured events the companion reacts to (thinking / done / error), inspired by [claude-buddy](https://github.com/1270011/claude-buddy)
-- **v0.4** — Windows + Linux builds, auto-start at login
+- **v0.4** — Windows + Linux builds
 - **v1.0** — Companion Pack spec frozen, second reference character shipped, `.dmg` + one-click install
 
 ## Ported code
@@ -158,5 +164,5 @@ Pane's visual assets come from [PaneStreet](https://github.com/ben4mn/panestreet
 ---
 
 <div align="center">
-<sub>Built by <a href="https://github.com/ben4mn">@ben4mn</a> · <a href="https://ben4mn.github.io/claude-companion/">Landing page</a></sub>
+<sub>Built by <a href="https://github.com/ben4mn">@ben4mn</a> · <a href="https://ben4mn.github.io/companion/">Landing page</a></sub>
 </div>

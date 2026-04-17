@@ -23,7 +23,36 @@ export async function mount(el) {
 
 function render() {
   mountEl.innerHTML = '';
-  mountEl.append(renderTrayBlock(), renderHotkeysBlock());
+  mountEl.append(renderStartupBlock(), renderTrayBlock(), renderHotkeysBlock());
+}
+
+function renderStartupBlock() {
+  const block = document.createElement('div');
+  block.className = 'block';
+  const h = document.createElement('h3');
+  h.textContent = 'Startup';
+  block.append(h);
+
+  const row = document.createElement('label');
+  row.className = 'checkbox-row';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = !!current.autostart;
+  checkbox.addEventListener('change', async () => {
+    current.autostart = checkbox.checked;
+    try { await saveSettings(current); } catch (e) { console.warn('[general] save', e); }
+  });
+  const label = document.createElement('span');
+  label.textContent = 'Launch Companion when I log in';
+  row.append(checkbox, label);
+  block.append(row);
+
+  const note = document.createElement('p');
+  note.className = 'muted hint';
+  note.textContent = 'Installs a LaunchAgent. Unchecking removes it.';
+  block.append(note);
+
+  return block;
 }
 
 function renderTrayBlock() {

@@ -58,7 +58,7 @@ pub fn spawn(app: AppHandle) {
                 // Skip our own process and Claude — they're handled by the
                 // hook/MCP path. The app-awareness feature is specifically
                 // for OTHER apps the user is running.
-                if current.starts_with("dev.ben4mn.claude-companion") { continue; }
+                if current.starts_with(crate::settings::COMPANION_BUNDLE_ID) { continue; }
                 if current.starts_with("com.anthropic.claudefordesktop") { continue; }
 
                 // Dedup: only emit when the frontmost bundle actually changes.

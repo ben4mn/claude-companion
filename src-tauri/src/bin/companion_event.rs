@@ -11,8 +11,8 @@
 //! single tool-use event.
 //!
 //! Usage:
-//!   claude-companion-event --event PreToolUse              (payload on stdin)
-//!   claude-companion-event --event Stop --port 48372
+//!   companion-event --event PreToolUse              (payload on stdin)
+//!   companion-event --event Stop --port 48372
 
 use std::env;
 use std::io::{Read, Write};
@@ -41,7 +41,7 @@ fn main() {
     }
 
     let Some(event_type) = event_type else {
-        eprintln!("claude-companion-event: --event <type> required");
+        eprintln!("companion-event: --event <type> required");
         std::process::exit(2);
     };
 

@@ -11,7 +11,7 @@
 //       what E2E cannot yet automate.
 //
 // Set TAURI_APP_PATH to the built app bundle if running locally:
-//   export TAURI_APP_PATH=./src-tauri/target/debug/claude-companion
+//   export TAURI_APP_PATH=./src-tauri/target/debug/companion
 
 export const config: WebdriverIO.Config = {
   runner: 'local',
@@ -21,7 +21,7 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       'tauri:options': {
-        application: process.env.TAURI_APP_PATH ?? './src-tauri/target/debug/claude-companion',
+        application: process.env.TAURI_APP_PATH ?? './src-tauri/target/debug/companion',
       },
       browserName: 'tauri',
     } as any,

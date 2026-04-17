@@ -38,6 +38,7 @@ export const DEFAULTS = Object.freeze({
     openSettings: 'Cmd+Shift+,',
     quit: 'Cmd+Shift+Q',
   },
+  autostart: false,
 });
 
 function tauri() {

@@ -14,6 +14,7 @@ use tauri::{
     tray::{TrayIcon, TrayIconBuilder},
     Emitter, LogicalPosition, Manager,
 };
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt as AutostartManagerExt};
 use tauri_plugin_global_shortcut::{
     Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
 };
@@ -96,6 +97,14 @@ fn settings_save(
         if let Ok(mut m) = mode_state.0.lock() {
             *m = settings.mode.mode.clone();
         }
+    }
+
+    // Autostart side effect: write/remove the LaunchAgent when the user
+    // toggles the setting. apply_autostart is a no-op when the desired
+    // state already matches the OS state, so this stays cheap on unrelated
+    // saves.
+    if previous.autostart != settings.autostart {
+        apply_autostart(&app, settings.autostart);
     }
 
     // The warning dialog itself is shown from the JS side (General tab) —
@@ -200,7 +209,7 @@ fn settings_path() -> String {
 ///
 /// Writes a `hooks` block to `~/.claude/settings.json` (merging with any
 /// existing content, never clobbering unrelated keys) that wires four Claude
-/// Code events to our bundled `claude-companion-event` CLI:
+/// Code events to our bundled `companion-event` CLI:
 ///   - PreToolUse  → Pane animates typing
 ///   - PostToolUse → Pane animates writing
 ///   - Notification → Pane looks concerned
@@ -276,15 +285,15 @@ fn bridge_binary_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, Stri
     // running out of target/debug alongside the dev binary.
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let dir = exe.parent().ok_or("no exe dir")?;
-    let path = dir.join("claude-companion-event");
+    let path = dir.join("companion-event");
     if path.exists() { return Ok(path); }
     // Fallback for dev: try the target/debug cousin.
     if let Some(app_dir) = app.path().resource_dir().ok() {
-        let p = app_dir.join("claude-companion-event");
+        let p = app_dir.join("companion-event");
         if p.exists() { return Ok(p); }
     }
     // Last resort: assume it's on PATH.
-    Ok(std::path::PathBuf::from("claude-companion-event"))
+    Ok(std::path::PathBuf::from("companion-event"))
 }
 
 /// Read all memory files from the user's ~/.claude tree and return a flat
@@ -316,7 +325,7 @@ fn mcp_config_json() -> Result<String, String> {
     let mcp_path = mcp_binary_path()?;
     let snippet = serde_json::json!({
         "mcpServers": {
-            "claude-companion": {
+            "companion": {
                 "command": mcp_path.to_string_lossy(),
                 "args": []
             }
@@ -326,7 +335,7 @@ fn mcp_config_json() -> Result<String, String> {
 }
 
 /// Auto-install the MCP server into the user's Claude Code config. Writes
-/// to `~/.claude.json` under `mcpServers.claude-companion`, merging with
+/// to `~/.claude.json` under `mcpServers.companion`, merging with
 /// anything already there (never clobbering the user's other servers).
 /// Returns the path written to.
 #[tauri::command]
@@ -348,8 +357,12 @@ fn install_mcp_config() -> Result<String, String> {
     if !obj.get("mcpServers").map(|v| v.is_object()).unwrap_or(false) {
         obj.insert("mcpServers".into(), serde_json::json!({}));
     }
-    obj["mcpServers"].as_object_mut().unwrap().insert(
-        "claude-companion".into(),
+    let servers = obj["mcpServers"].as_object_mut().unwrap();
+    // Remove the legacy key so users upgrading from pre-rebrand installs don't
+    // end up with two Companion entries registered with Claude Code.
+    servers.remove("claude-companion");
+    servers.insert(
+        "companion".into(),
         serde_json::json!({
             "command": mcp_path.to_string_lossy(),
             "args": []
@@ -381,6 +394,7 @@ fn uninstall_mcp_config() -> Result<String, String> {
     let mut root: serde_json::Value = serde_json::from_str(&existing)
         .unwrap_or_else(|_| serde_json::json!({}));
     if let Some(servers) = root.get_mut("mcpServers").and_then(|v| v.as_object_mut()) {
+        servers.remove("companion");
         servers.remove("claude-companion");
     }
     std::fs::write(&path, serde_json::to_string_pretty(&root).map_err(|e| e.to_string())?)
@@ -391,9 +405,9 @@ fn uninstall_mcp_config() -> Result<String, String> {
 fn mcp_binary_path() -> Result<std::path::PathBuf, String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
     let dir = exe.parent().ok_or("no exe dir")?;
-    let path = dir.join("claude-companion-mcp");
+    let path = dir.join("companion-mcp");
     if path.exists() { return Ok(path); }
-    Ok(std::path::PathBuf::from("claude-companion-mcp"))
+    Ok(std::path::PathBuf::from("companion-mcp"))
 }
 
 /// Write `text` to the system clipboard. Used by the Integration tab's
@@ -558,7 +572,7 @@ fn pane_set_interacting(active: bool) {
 
 /// On macOS, switch the process to an "accessory" app — no Dock icon, no
 /// entry in the app switcher, no menu bar. This is the difference between
-/// "Claude Companion is a separate app" and "there's just a little overlay
+/// "Companion is a separate app" and "there's just a little overlay
 /// floating on my desktop."
 #[cfg(target_os = "macos")]
 fn set_accessory_activation_policy() {
@@ -770,10 +784,10 @@ const CLAUDE_BUNDLE_ID: &str = "com.anthropic.claudefordesktop";
 const CLAUDE_OWNER_NAME: &str = "Claude";
 /// Must match `identifier` in tauri.conf.json. Used so that clicking Pane
 /// (which briefly makes us the frontmost app) doesn't trigger a hide.
-const COMPANION_BUNDLE_ID: &str = "dev.ben4mn.claude-companion";
+const COMPANION_BUNDLE_ID: &str = settings::COMPANION_BUNDLE_ID;
 /// CGWindow owner-name for this app's process, used to skip Pane's own window
 /// when detecting occluders. Must match productName in tauri.conf.json.
-const COMPANION_OWNER_NAME: &str = "Claude Companion";
+const COMPANION_OWNER_NAME: &str = "Companion";
 
 #[cfg(target_os = "macos")]
 fn is_claude_running() -> bool {
@@ -1272,11 +1286,30 @@ fn pane_window_rect(window: &tauri::WebviewWindow) -> Option<occlusion::Rect> {
     ))
 }
 
+/// Reconcile the autostart plugin's on-disk LaunchAgent state with the user's
+/// persisted `autostart` setting. Config is source of truth — if the two
+/// disagree, we rewrite the LaunchAgent. Errors are logged and swallowed;
+/// failing to register a LaunchAgent is not worth aborting launch over.
+fn apply_autostart(app: &tauri::AppHandle, desired: bool) {
+    let manager = app.autolaunch();
+    let current = manager.is_enabled().unwrap_or(false);
+    if desired == current { return; }
+    let res = if desired { manager.enable() } else { manager.disable() };
+    if let Err(e) = res {
+        eprintln!("[autostart] failed to {}: {e}", if desired { "enable" } else { "disable" });
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    settings::migrate_legacy_config_if_needed();
     let initial_settings = settings::load_from(&settings::default_config_path());
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
@@ -1334,6 +1367,11 @@ pub fn run() {
         .setup(move |app| {
             #[cfg(target_os = "macos")]
             set_accessory_activation_policy();
+
+            // Reconcile autostart: config is source of truth. A user who
+            // disabled autostart in settings on another machine, then
+            // restored their config here, should not have a stale LaunchAgent.
+            apply_autostart(app.handle(), initial_settings.autostart);
 
             // Initial hotkey registration based on settings at boot.
             let gs = app.global_shortcut();
@@ -1431,5 +1469,5 @@ pub fn run() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("error while running Claude Companion");
+        .expect("error while running Companion");
 }

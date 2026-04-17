@@ -1,4 +1,4 @@
-//! Claude Companion MCP server — stdio JSON-RPC.
+//! Companion MCP server — stdio JSON-RPC.
 //!
 //! Spawned by Claude Code after the user adds an entry to their MCP config.
 //! Exposes three tools Claude can call:
@@ -62,7 +62,7 @@ fn handle_initialize() -> serde_json::Value {
     serde_json::json!({
         "protocolVersion": "2024-11-05",
         "capabilities": { "tools": {} },
-        "serverInfo": { "name": "claude-companion", "version": "0.1.0" }
+        "serverInfo": { "name": "companion", "version": "0.1.0" }
     })
 }
 
@@ -71,7 +71,7 @@ fn handle_tools_list() -> serde_json::Value {
         "tools": [
             {
                 "name": "companion_say",
-                "description": "Make Pane (the Claude Companion) speak a short message in a speech bubble. Use this to acknowledge the user, react to a finding, or celebrate a success — keep it under 10 words.",
+                "description": "Make Pane (the Companion) speak a short message in a speech bubble. Use this to acknowledge the user, react to a finding, or celebrate a success — keep it under 10 words.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {

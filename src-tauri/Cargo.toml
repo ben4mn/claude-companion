@@ -1,11 +1,11 @@
 [package]
-name = "claude-companion"
+name = "companion"
 version = "0.1.0"
 edition = "2021"
-default-run = "claude-companion"
+default-run = "companion"
 
 [lib]
-name = "claude_companion_lib"
+name = "companion_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
@@ -14,6 +14,7 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["macos-private-api", "tray-icon"] }
 tauri-plugin-global-shortcut = "2"
+tauri-plugin-autostart = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Phase 5 integrations: local HTTP IPC + file-watch for memory reader.
@@ -24,16 +25,16 @@ dirs = "5"
 arboard = "3"
 
 [[bin]]
-name = "claude-companion"
+name = "companion"
 path = "src/main.rs"
 
 [[bin]]
-name = "claude-companion-event"
-path = "src/bin/claude_companion_event.rs"
+name = "companion-event"
+path = "src/bin/companion_event.rs"
 
 [[bin]]
-name = "claude-companion-mcp"
-path = "src/bin/claude_companion_mcp.rs"
+name = "companion-mcp"
+path = "src/bin/companion_mcp.rs"
 
 [dev-dependencies]
 mockall = "0.13"

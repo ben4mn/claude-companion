@@ -8,8 +8,8 @@
 //!     engine's hook_reactions.js picks up the event and animates Pane.
 //!   - `GET /health` — returns 200 for liveness checks.
 //!
-//! Callers: the bundled `claude-companion-event` CLI (for Claude Code hooks)
-//! and `claude-companion-mcp` (for MCP tool dispatch). Both ship beside the
+//! Callers: the bundled `companion-event` CLI (for Claude Code hooks)
+//! and `companion-mcp` (for MCP tool dispatch). Both ship beside the
 //! main app binary.
 //!
 //! Why HTTP instead of a unix socket or named pipe? HTTP is boring: the CLI
@@ -127,14 +127,14 @@ pub fn spawn_server(app: AppHandle, port: u16) {
     }
 }
 
-/// Append a timestamped diagnostic line to /tmp/claude-companion-ipc.log.
+/// Append a timestamped diagnostic line to /tmp/companion-ipc.log.
 /// Swallows all errors — diagnostic logging should never break the app.
 fn log_diag(msg: &str) {
     use std::io::Write;
     if let Ok(mut f) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open("/tmp/claude-companion-ipc.log")
+        .open("/tmp/companion-ipc.log")
     {
         let _ = writeln!(
             f,

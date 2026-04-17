@@ -1,12 +1,13 @@
 {
-  "name": "claude-companion",
+  "name": "companion",
   "version": "0.1.0",
-  "description": "A small always-on-top overlay that brings animated Companions to the Claude Desktop app. Ships with Pane, the SVG companion from PaneStreet, as the reference pack.",
+  "description": "A small always-on-top overlay that brings animated Companions to your AI desktop app. Ships with Pane, the SVG companion from PaneStreet, as the reference pack.",
   "private": true,
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
+    "install:app": "bash scripts/install-app.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "wdio run wdio.conf.ts"

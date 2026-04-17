@@ -1,7 +1,7 @@
-//! Persistent user settings for Claude Companion.
+//! Persistent user settings for Companion.
 //!
 //! Stored as JSON at the app config dir (macOS:
-//! `~/Library/Application Support/dev.ben4mn.claude-companion/config.json`).
+//! `~/Library/Application Support/dev.ben4mn.companion/config.json`).
 //!
 //! Design notes:
 //! - `Settings` is a flat typed struct with `#[serde(default)]` on every sub-
@@ -19,6 +19,10 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
+pub const COMPANION_BUNDLE_ID: &str = "dev.ben4mn.companion";
+/// Previous bundle ID, kept for one-shot config migration from pre-rename installs.
+pub const LEGACY_BUNDLE_ID: &str = "dev.ben4mn.claude-companion";
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
@@ -29,6 +33,8 @@ pub struct Settings {
     pub integration: IntegrationSettings,
     pub app_awareness: AppAwarenessSettings,
     pub hotkeys: HotkeySettings,
+    /// Launch Companion when the user logs in. Default OFF — opt-in.
+    pub autostart: bool,
 }
 
 impl Default for Settings {
@@ -41,6 +47,7 @@ impl Default for Settings {
             integration: IntegrationSettings::default(),
             app_awareness: AppAwarenessSettings::default(),
             hotkeys: HotkeySettings::default(),
+            autostart: false,
         }
     }
 }
@@ -219,10 +226,11 @@ pub fn save_to(path: &Path, settings: &Settings) -> std::io::Result<()> {
 /// Returns the real config path (`~/Library/Application Support/.../config.json`
 /// on macOS). Separated from `load_from` so tests don't need a full Tauri app.
 pub fn default_config_path() -> PathBuf {
-    // Mirrors Tauri's app_config_dir() logic but without requiring the AppHandle
-    // at setup time — we want this callable from anywhere, including the
-    // Claude watcher thread. Bundle ID must match tauri.conf.json identifier.
-    let bundle_id = "dev.ben4mn.claude-companion";
+    config_path_for(COMPANION_BUNDLE_ID)
+}
+
+/// Path for a specific bundle ID — used by migration to locate the legacy dir.
+fn config_path_for(bundle_id: &str) -> PathBuf {
     #[cfg(target_os = "macos")]
     {
         let home = std::env::var("HOME").unwrap_or_default();
@@ -239,6 +247,23 @@ pub fn default_config_path() -> PathBuf {
             .join(bundle_id)
             .join("config.json");
     }
+}
+
+/// One-shot copy of the pre-rebrand config into the new bundle dir, if the new
+/// dir doesn't exist yet and the old one does. Runs on every launch but no-ops
+/// once the new file is present. Never fails the launch: any I/O error is
+/// swallowed and the app starts with defaults, same as a fresh install.
+pub fn migrate_legacy_config_if_needed() {
+    migrate_between(&config_path_for(LEGACY_BUNDLE_ID), &default_config_path());
+}
+
+fn migrate_between(old: &Path, new: &Path) {
+    if new.try_exists().unwrap_or(false) { return; }
+    if !old.try_exists().unwrap_or(false) { return; }
+    if let Some(parent) = new.parent() {
+        if std::fs::create_dir_all(parent).is_err() { return; }
+    }
+    let _ = std::fs::copy(old, new);
 }
 
 // ============================================================================
@@ -313,6 +338,46 @@ mod tests {
         assert!(json.contains("\"activityFrequency\""));
         assert!(json.contains("\"firstDisableWarningShown\""));
         assert!(!json.contains("app_awareness"));
+    }
+
+    #[test]
+    fn migrate_between_copies_old_to_new_when_new_missing() {
+        let tmp = TempDir::new().unwrap();
+        let old = tmp.path().join("old/config.json");
+        let new = tmp.path().join("new/config.json");
+        std::fs::create_dir_all(old.parent().unwrap()).unwrap();
+        std::fs::write(&old, r#"{"tray":{"visible":false}}"#).unwrap();
+
+        migrate_between(&old, &new);
+
+        let copied = std::fs::read_to_string(&new).unwrap();
+        assert!(copied.contains("\"visible\":false"));
+        assert!(old.exists(), "legacy file must not be deleted");
+    }
+
+    #[test]
+    fn migrate_between_is_noop_when_new_already_exists() {
+        let tmp = TempDir::new().unwrap();
+        let old = tmp.path().join("old/config.json");
+        let new = tmp.path().join("new/config.json");
+        std::fs::create_dir_all(old.parent().unwrap()).unwrap();
+        std::fs::create_dir_all(new.parent().unwrap()).unwrap();
+        std::fs::write(&old, r#"{"tray":{"visible":false}}"#).unwrap();
+        std::fs::write(&new, r#"{"tray":{"visible":true}}"#).unwrap();
+
+        migrate_between(&old, &new);
+
+        let existing = std::fs::read_to_string(&new).unwrap();
+        assert!(existing.contains("\"visible\":true"), "must not overwrite");
+    }
+
+    #[test]
+    fn migrate_between_is_noop_when_old_missing() {
+        let tmp = TempDir::new().unwrap();
+        let old = tmp.path().join("old/config.json");
+        let new = tmp.path().join("new/config.json");
+        migrate_between(&old, &new);
+        assert!(!new.exists());
     }
 
     #[test]

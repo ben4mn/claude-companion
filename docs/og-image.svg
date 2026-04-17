@@ -17,7 +17,7 @@
 
   <!-- Title -->
   <text x="60" y="150" fill="#e6e8ef" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="800" font-size="88" letter-spacing="-2">
-    Claude Companion
+    Companion
   </text>
   <text x="60" y="210" fill="#a0a6b2" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="400" font-size="32">
     Animated companions for the Claude Desktop app on macOS.
@@ -45,7 +45,7 @@
 
   <!-- URL footer -->
   <text x="60" y="580" fill="#6b7280" font-family="ui-monospace, Menlo, monospace" font-size="22">
-    github.com/ben4mn/claude-companion
+    github.com/ben4mn/companion
   </text>
 
   <!-- Character row: Pane, Blob, Cat, Ghost, Sprite -->
